@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}إدارة الإرجاع | Harly Click{% endblock %}
+{% block content %}
+<h1>🔄 إدارة طلبات الإرجاع</h1>
+{% set pending = rows | selectattr('status', 'equalto', 'pending') | list %}
+<h2 class="sec-title">⏳ بانتظار المراجعة ({{ pending|length }})</h2>
+{% if pending %}
+<table class="table">
+  <tr><th>#</th><th>العميل</th><th>الطلب</th><th>القيمة</th><th>السبب</th><th>التاريخ</th><th>إجراء</th></tr>
+  {% for r in pending %}
+  <tr>
+    <td>{{ r['id'] }}</td><td>{{ r['uname'] }}<br><small>{{ r['email'] }}</small></td>
+    <td>#{{ r['order_id'] }}</td><td>{{ r['ototal'] }} ج.م</td>
+    <td>{{ r['reason'] }}</td><td><small>{{ r['created_at'] }}</small></td>
+    <td>
+      <form method="post" style="display:flex;gap:5px;flex-direction:column"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="return_id" value="{{ r['id'] }}">
+        <input type="text" name="note" placeholder="ملاحظة (اختياري)" style="padding:6px;border:1px solid #ddd;border-radius:6px">
+        <label class="chk" style="font-size:12px"><input type="checkbox" name="refund" checked> 💰 استرداد للمحفظة</label>
+        <button name="action" value="approve" class="btn small">✅ قبول</button>
+        <button name="action" value="reject" class="btn small danger">❌ رفض</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">مفيش طلبات إرجاع معلقة 🎉</p>
+{% endif %}
+
+<h2 class="sec-title">📋 كل طلبات الإرجاع</h2>
+<table class="table">
+  <tr><th>#</th><th>العميل</th><th>الطلب</th><th>القيمة</th><th>السبب</th><th>الحالة</th><th>ملاحظة الإدارة</th><th>تاريخ المراجعة</th></tr>
+  {% for r in rows %}
+  <tr>
+    <td>{{ r['id'] }}</td><td>{{ r['uname'] }}</td><td>#{{ r['order_id'] }}</td><td>{{ r['ototal'] }} ج.م</td>
+    <td>{{ r['reason'] }}</td>
+    <td>
+      {% if r['status']=='approved' %}<span class="status ok">✅ مقبول</span>
+      {% elif r['status']=='rejected' %}<span class="status no">❌ مرفوض</span>
+      {% else %}<span class="status">⏳ معلق</span>{% endif %}
+    </td>
+    <td>{{ r['admin_note'] or '-' }}</td><td><small>{{ r['handled_at'] or '-' }}</small></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

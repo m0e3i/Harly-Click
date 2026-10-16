@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}تعديل منتج | Harly Click{% endblock %}
+{% block content %}
+<h1>✏️ تعديل: {{ p['name'] }}</h1>
+<form method="post" enctype="multipart/form-data" class="form admin-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row">
+    <input type="text" name="name" value="{{ p['name'] }}" required>
+    <input type="text" name="emoji" value="{{ p['emoji'] }}" maxlength="4">
+  </div>
+  <textarea name="description">{{ p['description'] }}</textarea>
+  <div class="row">
+    <input type="number" name="price" value="{{ p['price'] }}" step="0.01" required>
+    <input type="number" name="old_price" value="{{ p['old_price'] or '' }}" step="0.01">
+    <input type="number" name="stock" value="{{ p['stock'] }}" required>
+  </div>
+  <select name="category">
+    {% for c in all_categories %}<option value="{{ c }}" {% if p['category']==c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+  </select>
+  <div class="row">
+    <label style="flex:1">🍽️ وحدة البيع<select name="unit" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:8px">{% for un in units %}<option value="{{ un }}" {% if (p['unit'] or 'قطعة') == un %}selected{% endif %}>{{ un }}</option>{% endfor %}</select></label>
+    <label style="flex:1">🔖 الحد الأدنى للطلب<input type="number" name="min_order" value="{{ p['min_order'] or 1 }}" min="1" max="10000" required style="width:100%"></label>
+  </div>
+  <label>🖼️ الصورة الحالية: {% if p['image'] %}<img class="thumb" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async">{% else %}{{ p['emoji'] }} (إيموجي){% endif %}</label>
+  <label>تغيير الصورة (سيبه فاضي لو مش عايز تغيّر):</label>
+  <input type="file" name="image" accept="image/*">
+  <div class="row">
+    <label class="chk"><input type="checkbox" name="featured" {% if p['featured'] %}checked{% endif %}> ⭐ منتج مميز</label>
+    <label class="chk"><input type="checkbox" name="flash" {% if p['flash'] %}checked{% endif %}> ⚡ عرض فلاش</label>
+  </div>
+  <button type="submit" class="btn-big">حفظ التعديلات ✅</button>
+</form>
+{% endblock %}

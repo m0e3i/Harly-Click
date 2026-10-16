@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Harly Click | هارلي كليك{% endblock %}</title>
+<meta name="description" content="{% block meta_desc %}Harly Click | هارلي كليك — سوبر ماركت أونلاين مصري: بقالة وخضروات وفاكهة ولحوم وألبان ومشروبات ومنظفات بأسعار محلية وتوصيل لباب البيت في كل المحافظات 🚚{% endblock %}">
+<meta name="theme-color" content="#6c2bd9">
+<link rel="canonical" href="{{ canonical_url }}">
+<meta property="og:site_name" content="Harly Click">
+<meta property="og:locale" content="ar_EG">
+<meta property="og:type" content="{% block og_type %}website{% endblock %}">
+<meta property="og:title" content="{{ self.title() }}">
+<meta property="og:description" content="{{ self.meta_desc() }}">
+<meta property="og:url" content="{{ canonical_url }}">
+{% block og_image %}{% endblock %}
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="{{ static_v('style.css') }}">
+{% if ld is defined and ld %}{% for x in (ld if ld is not mapping else [ld]) %}<script type="application/ld+json">{{ x|tojson }}</script>
+{% endfor %}{% endif %}
+{% block head_extra %}{% endblock %}
+</head>
+<body>
+<header>
+  <div class="container nav">
+    <a href="{{ url_for('home') }}" class="logo">⚡ Harly <span>Click</span></a>
+    <div class="search-wrap">
+      <form class="search" action="{{ url_for('shop') }}" method="get">
+        <input type="text" name="q" id="searchBox" placeholder="🔍 ابحث عن منتج..." autocomplete="off"
+               value="{{ request.args.get('q','') }}">
+      </form>
+      <div id="suggest" class="suggest"></div>
+    </div>
+    <nav>
+      <a href="{{ url_for('home') }}">الرئيسية</a>
+      <a href="{{ url_for('shop') }}">المتجر</a>
+      {% if user_name %}
+        <a href="{{ url_for('affiliate') }}">🤝 التسويق</a>
+        <a href="{{ url_for('wallet') }}">💰 المحفظة</a>
+        <a href="{{ url_for('wishlist') }}">❤️</a>
+        <a href="{{ url_for('cart') }}">🛒 <b class="badge">{{ cart_count }}</b></a>
+        <div class="user-menu">
+          <a href="{{ url_for('profile') }}">👤 {{ user_name }}</a>
+          <div class="dropdown">
+            <a href="{{ url_for('profile') }}">الملف الشخصي</a>
+            <a href="{{ url_for('wallet') }}">💰 المحفظة والرصيد</a>
+            <a href="{{ url_for('my_orders') }}">📦 طلباتي</a>
+            <a href="{{ url_for('returns') }}">🔄 الإرجاع والاستبدال</a>
+            <a href="{{ url_for('affiliate') }}">🤝 التسويق بالعمولة</a>
+            {% if is_admin %}<a href="{{ url_for('admin') }}">⚙️ لوحة التحكم</a>{% endif %}
+            <a href="{{ url_for('logout') }}">🚪 تسجيل الخروج</a>
+          </div>
+        </div>
+      {% else %}
+        <a href="{{ url_for('cart') }}">🛒 <b class="badge">{{ cart_count }}</b></a>
+        <a href="{{ url_for('login') }}">دخول</a>
+        <a href="{{ url_for('register') }}" class="btn-nav">حساب جديد</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% if msgs %}
+  <div class="container flashes">
+    {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+  <div class="container footer-grid">
+    <div>
+      <h4>⚡ Harly Click</h4>
+      <p>وجهتك الأولى للتسوق أونلاين — جودة عالمية وأسعار محلية، وتوصيل سريع لباب البيت 🚚</p>
+    </div>
+    <div>
+      <h4>روابط سريعة</h4>
+      <a href="{{ url_for('shop') }}">المتجر</a>
+      <a href="{{ url_for('affiliate') }}">التسويق بالعمولة</a>
+      <a href="{{ url_for('about') }}">من نحن</a>
+      <a href="{{ url_for('contact') }}">تواصل معنا</a>
+    </div>
+    <div>
+      <h4>خدمة العملاء</h4>
+      <a href="{{ url_for('my_orders') }}">تتبع طلبك</a>
+      <a href="{{ url_for('returns') }}">سياسة الإرجاع والاستبدال</a>
+      <a href="{{ url_for('contact') }}#faq">الأسئلة الشائعة</a>
+    </div>
+    <div>
+      <h4>تواصل معانا</h4>
+      <p>📞 <a href="tel:{{ site.phone }}" style="display:inline;margin:0">{{ site.phone }}</a></p>
+      <p>✉️ <a href="mailto:{{ site.email }}" style="display:inline;margin:0">{{ site.email }}</a></p>
+      {% if site.wa_on %}<p>💬 <a href="{{ site.wa_link }}" target="_blank" rel="noopener" style="display:inline;margin:0">واتساب الدعم الفني</a></p>{% endif %}
+      {% if site.address %}<p>📍 {{ site.address }}</p>{% endif %}
+    </div>
+  </div>
+  <div class="copy">© 2026 Harly Click — كل الحقوق محفوظة</div>
+</footer>
+
+<script>
+const sb = document.getElementById('searchBox'), sg = document.getElementById('suggest');
+if (sb) {
+  let t;
+  sb.addEventListener('input', () => {
+    clearTimeout(t);
+    const q = sb.value.trim();
+    if (q.length < 2) { sg.style.display = 'none'; return; }
+    t = setTimeout(async () => {
+      const r = await fetch('/autocomplete?q=' + encodeURIComponent(q));
+      const data = await r.json();
+      if (data.length) {
+        sg.innerHTML = data.map(x => `<a href="/product/${x.id}">${x.name}</a>`).join('');
+        sg.style.display = 'block';
+      } else sg.style.display = 'none';
+    }, 250);
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) sg.style.display = 'none'; });
+}
+function copyNum(el) {
+  const num = el.dataset.num;
+  navigator.clipboard.writeText(num).then(() => {
+    el.textContent = '✅ اتنسخ!';
+    setTimeout(() => { el.textContent = '📋 نسخ الرقم'; }, 1500);
+  });
+}
+// ===== تذكرني: حفظ بيانات الدخول في ذاكرة الجهاز (localStorage) =====
+const remForm = document.getElementById('loginForm');
+if (remForm) {
+  const em = document.getElementById('emailBox'), ck = document.getElementById('rememberMe');
+  const saved = localStorage.getItem('hc_email');
+  if (saved) { em.value = saved; ck.checked = true; }
+  remForm.addEventListener('submit', () => {
+    if (ck.checked) localStorage.setItem('hc_email', em.value.trim());
+    else localStorage.removeItem('hc_email');
+  });
+}
+</script>
+{% if site.wa_on and not request.path.startswith('/admin') %}<a class="wa-support" href="{{ site.wa_link }}" target="_blank" rel="noopener" aria-label="الدعم الفني على واتساب" title="الدعم الفني على واتساب">💬</a>{% endif %}
+</body>
+</html>

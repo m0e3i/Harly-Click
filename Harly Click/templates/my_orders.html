@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}طلباتي | Harly Click{% endblock %}
+{% block content %}
+<h1>📦 طلباتي</h1>
+{% for o in orders %}
+<div class="order-box">
+  <div class="order-head">
+    <b>طلب #{{ o['id'] }}</b> — <b>{{ o['total'] }} ج.م</b>
+    {% if o['discount'] %}<span class="green">(خصم {{ o['discount'] }})</span>{% endif %}
+    <span class="status">{{ o['status'] }}</span>
+    <small>{{ o['created_at'] }}</small>
+    <span style="margin-right:auto">
+      <a href="{{ url_for('invoice', oid=o['id']) }}" target="_blank" class="btn small">🧾 الفاتورة</a>
+      {% if o['status'] == 'تم التوصيل' and not returns_map[o['id']] %}
+      <form method="post" action="{{ url_for('return_request', oid=o['id']) }}" class="status-form" style="display:inline"
+            onsubmit="const r=prompt('سبب الإرجاع؟'); if(!r) return false; this.reason.value=r;"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="reason">
+        <button class="btn small danger">🔄 طلب إرجاع</button>
+      </form>
+      {% elif returns_map[o['id']] %}
+      <a href="{{ url_for('returns') }}" class="btn small">🔄 {{ {'pending':'إرجاع قيد المراجعة','approved':'تم قبول الإرجاع','rejected':'تم رفض الإرجاع'}[returns_map[o['id']]['status']] }}</a>
+      {% endif %}
+    </span>
+  </div>
+  {% if o['status'] in steps %}
+  <div class="tracker">
+    {% for s in steps %}
+    <div class="step {{ 'done' if steps.index(o['status']) >= loop.index0 }}"><span class="dot">✓</span>{{ s }}</div>
+    {% if not loop.last %}<div class="line {{ 'done' if steps.index(o['status']) > loop.index0 }}"></div>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  <p>💳 {{ pay_methods.get(o['payment_method'], '💵 كاش عند الاستلام') }} — المدفوع: {{ o['paid'] }} ج.م</p>
+  {% if o['governorate'] or o['shipping'] %}<p>🚚 {{ o['governorate'] or '' }} — الشحن: {% if o['shipping'] %}{{ o['shipping']|money }} ج.م{% else %}مجاني 🎉{% endif %}</p>{% endif %}
+  <ul>
+    {% for it in details[o['id']] %}
+    <li>{{ it['name'] }} × {{ it['qty'] }}{% if (it['unit'] or 'قطعة') != 'قطعة' %} {{ it['unit'] }}{% endif %} = {{ it['price']*it['qty'] }} ج.م</li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<p class="empty">لسه معندكش طلبات — <a href="{{ url_for('shop') }}">ابدأ التسوق 🛍️</a></p>
+{% endfor %}
+{% endblock %}

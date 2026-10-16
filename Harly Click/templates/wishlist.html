@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}المفضلة | Harly Click{% endblock %}
+{% block content %}
+<h1>❤️ قائمة المفضلة</h1>
+{% if products %}
+<div class="grid">
+  {% for p in products %}
+  <div class="card">
+    {% if p['image'] %}<img class="p-img" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async" alt="{{ p['name'] }}">{% else %}<div class="img-box">{{ p['emoji'] }}</div>{% endif %}
+    {% if p['old_price'] %}<span class="off">-{{ ((1 - p['price']/p['old_price'])*100)|round|int }}%</span>{% endif %}
+    <h3>{{ p['name'] }}</h3>
+    <div class="price"><b>{{ p['price'] }} ج.م{{ unit_label(p) }}</b></div>
+    <form method="post" action="{{ url_for('add_to_cart', pid=p['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" type="submit">🛒 أضف للسلة</button></form>
+    <a href="{{ url_for('toggle_wish', pid=p['id']) }}" class="wish-btn">💔 إزالة</a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">مفضلتك فاضية ❤️... <a href="{{ url_for('shop') }}">شوف المنتجات</a></p>
+{% endif %}
+{% endblock %}

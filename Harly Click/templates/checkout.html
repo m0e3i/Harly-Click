@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}إتمام الطلب | Harly Click{% endblock %}
+{% block content %}
+<h1>🧾 إتمام الطلب</h1>
+<div class="checkout">
+  <form method="post" class="form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3>📍 بيانات التوصيل</h3>
+    <input type="text" name="address" placeholder="العنوان بالتفصيل" value="{{ u['address'] or '' }}" required>
+    <input type="text" name="phone" placeholder="📞 رقم الموبايل" value="{{ u['phone'] or '' }}" required>
+    {% if zones %}
+    <select name="governorate" id="govSel" {% if ship.enabled %}required{% endif %}>
+      <option value="">📍 اختار المحافظة</option>
+      {% for z in zones %}<option value="{{ z['governorate'] }}" data-fee="{{ z['fee'] }}" {% if z['governorate'] == gov %}selected{% endif %}>{{ z['governorate'] }}{% if ship.enabled %} — شحن {{ z['fee']|money }} ج.م{% endif %}</option>{% endfor %}
+    </select>
+    {% endif %}
+    {% if aff %}
+    <div class="flash success">🤝 كود المسوق <b>{{ aff['code'] }}</b> شغال — خصم {{ 10 }}% محسوب ✅</div>
+    {% else %}
+    <input type="text" name="unused_aff" placeholder="🤝 كود مسوق بالعمولة (اختياري)" disabled style="opacity:.5">
+    {% endif %}
+    <h3>💳 طريقة الدفع</h3>
+    <div class="pay-opts">
+      {% if co.cod %}<label class="chk"><input type="radio" name="payment" value="cod" checked> 💵 كاش عند الاستلام</label><br>{% endif %}
+      {% if co.balance %}<label class="chk"><input type="radio" name="payment" value="balance" {% if balance < grand %}disabled{% endif %}> 💰 رصيد المحفظة ({{ balance }} ج.م)</label><br>{% endif %}
+      {% if co.partial %}<label class="chk"><input type="radio" name="payment" value="partial" {% if balance <= 0 %}disabled{% endif %}> 💸 دفع جزئي من الرصيد</label>
+      <input type="number" name="partial_amount" placeholder="المبلغ المدفوع مقدماً" step="0.01" min="1" style="margin-top:6px">{% endif %}
+    </div>
+    <button type="submit" class="btn-big">تأكيد الطلب ✅</button>
+    {% if whatsapp_on %}<button type="submit" formaction="{{ url_for('cart_whatsapp') }}" formmethod="post" formtarget="_blank" formnovalidate class="btn-big btn-wa" style="margin-right:0">🟢 اطلب عبر واتساب بدل الدفع هنا</button>{% endif %}
+  </form>
+  <div class="summary">
+    <h3>📦 ملخص الطلب</h3>
+    {% for it in items %}
+    <p>{{ it['p']['emoji'] }} {{ it['p']['name'] }} × {{ it['qty'] }}{% if (it['p']['unit'] or 'قطعة') != 'قطعة' %} {{ it['p']['unit'] }}{% endif %} — <b>{{ it['p']['price']*it['qty'] }} ج.م</b></p>
+    {% endfor %}
+    <p>الإجمالي: <b>{{ subtotal }} ج.م</b></p>
+    {% if discount %}<p class="green">الخصم: -{{ discount }} ج.م {% if aff %}(كود مسوق){% endif %}</p>{% endif %}
+    {% if ship.enabled %}<p>🚚 الشحن: <b id="shipVal">{% if gov and ship.free %}مجاني 🎉{% elif gov %}{{ ship.fee|money }} ج.م{% elif ship.free %}مجاني 🎉{% else %}اختار المحافظة{% endif %}</b></p>
+    {% if ship.free_min > 0 %}<p><small>🎁 الشحن مجاني للطلبات من {{ ship.free_min|money }} ج.م</small></p>{% endif %}{% endif %}
+    <h3>المطلوب: <span class="red" id="grandVal">{{ grand|money }} ج.م</span></h3>
+  </div>
+</div>
+<script>
+(function(){
+  function pickPay(){ if(!document.querySelector('input[name=payment]:checked')){ var f=document.querySelector('input[name=payment]:not(:disabled)'); if(f) f.checked=true; } }
+  pickPay();
+  var sel=document.getElementById('govSel'); if(!sel) return;
+  var total={{ total }}, freeMin={{ ship.free_min }}, on={{ 'true' if ship.enabled else 'false' }}, bal={{ balance }};
+  function r2(x){return Math.round(x*100)/100;}
+  function upd(){
+    var o=sel.options[sel.selectedIndex], fee=0, label='اختار المحافظة', free=freeMin>0&&total>=freeMin;
+    if(o&&o.value){ fee=parseFloat(o.dataset.fee)||0; if(free) fee=0; label=fee===0?'مجاني 🎉':r2(fee)+' ج.م'; }
+    else if(free){ label='مجاني 🎉'; }
+    if(!on){ fee=0; }
+    var g=r2(total+fee), sv=document.getElementById('shipVal'), gv=document.getElementById('grandVal');
+    if(sv) sv.textContent=label; if(gv) gv.textContent=g+' ج.م';
+    var b=document.querySelector('input[name=payment][value=balance]'); if(b){ b.disabled=bal<g; if(b.disabled&&b.checked){ b.checked=false; pickPay(); } }
+  }
+  sel.addEventListener('change',upd); upd();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}تأكيد التحويل | Harly Click{% endblock %}
+{% block content %}
+<div class="transfer-box">
+  <h1>📲 أكمل تحويل {{ method_name }}</h1>
+  <p>حوّل <b class="red">{{ amount }} ج.م</b> على الرقم ده:</p>
+  <div class="transfer-num">
+    <span>{{ transfer_number }}</span>
+    <button class="btn" data-num="{{ transfer_number }}" onclick="copyNum(this)">📋 نسخ الرقم</button>
+  </div>
+  <form method="post" action="{{ url_for('wallet_confirm') }}" class="form" style="max-width:100%;text-align:right"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="amount" value="{{ amount }}">
+    <input type="hidden" name="method" value="{{ method }}">
+    {% if sender_on %}
+    <label>📱 رقم المحوّل منه (رقمك اللي حوّلت بيه) *</label>
+    <input type="text" name="sender_number" placeholder="مثال: 01012345678" required>
+    {% endif %}
+    <p class="transfer-note">بعد التحويل اضغط تأكيد — الإدارة هتراجع رقم المحوّل وتضيف الرصيد لحسابك ✅</p>
+    <button type="submit" class="btn-big">تأكيد التحويل ✅</button>
+  </form>
+</div>
+{% endblock %}

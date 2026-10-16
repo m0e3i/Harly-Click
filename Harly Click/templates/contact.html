@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}الدعم الفني وتواصل معنا | Harly Click{% endblock %}
+{% block meta_desc %}تواصل مع دعم Harly Click على {{ site.phone }} أو واتساب أو الإيميل {{ site.email }} — بنرد عليك في أسرع وقت.{% endblock %}
+{% block content %}
+<h1>🎧 الدعم الفني وتواصل معنا</h1>
+
+<div class="contact-cards">
+  <a class="cc" href="tel:{{ site.phone }}"><span>📞</span><b>اتصل بينا</b><small>{{ site.phone }}</small></a>
+  {% if site.wa_on %}<a class="cc" href="{{ wa_link }}" target="_blank" rel="noopener"><span>💬</span><b>واتساب الدعم</b><small>{{ site.wa_support }}</small></a>{% endif %}
+  <a class="cc" href="mailto:{{ site.email }}"><span>✉️</span><b>الإيميل</b><small>{{ site.email }}</small></a>
+  <div class="cc"><span>🕐</span><b>مواعيد الدعم</b><small>{{ site.hours or 'يومياً' }}</small></div>
+</div>
+
+<div class="checkout">
+  <form method="post" class="form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3>📩 ابعتلنا رسالة</h3>
+    <label>اسمك</label>
+    <input type="text" name="name" maxlength="80" value="{{ u['name'] if u else '' }}" required>
+    <label>إيميلك</label>
+    <input type="email" name="email" value="{{ u['email'] if u else '' }}" required>
+    <label>موبايلك (اختياري)</label>
+    <input type="text" name="phone" value="{{ (u['phone'] or '') if u else '' }}" inputmode="tel" maxlength="20">
+    <label>موضوع الرسالة</label>
+    <select name="subject">{% for s in subjects %}<option value="{{ s }}">{{ s }}</option>{% endfor %}</select>
+    <label>رسالتك</label>
+    <textarea name="msg" required minlength="5" maxlength="2000" placeholder="اكتب استفسارك أو مشكلتك... ولو عن طلب اكتب رقمه"></textarea>
+    <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;height:0" aria-hidden="true">
+    <button type="submit" class="btn-big">إرسال 📩</button>
+  </form>
+  <div class="summary">
+    <h3>معلومات التواصل</h3>
+    <p>📞 <b>{{ site.phone }}</b></p>
+    <p>✉️ <b>{{ site.email }}</b></p>
+    {% if site.address %}<p>📍 {{ site.address }}</p>{% endif %}
+    {% if site.hours %}<p>🕐 خدمة العملاء: {{ site.hours }}</p>{% endif %}
+    <hr>
+    {% if site.wa_on %}<p><a class="btn btn-wa" style="margin:0" href="{{ wa_link }}" target="_blank" rel="noopener">🟢 كلمنا على واتساب</a></p>{% endif %}
+  </div>
+</div>
+
+{% if mine %}
+<h2 class="sec-title">🎫 رسايلك السابقة</h2>
+{% for t in mine %}
+<div class="order-box">
+  <div class="order-head"><b>#{{ t['id'] }} — {{ t['subject'] }}</b> <span class="status">{{ t['status'] }}</span> <small>{{ t['created_at'] }}</small></div>
+  <p>{{ t['message'] }}</p>
+  {% if t['admin_reply'] %}<p class="flash success">💬 رد الدعم{% if t['replied_at'] %} ({{ t['replied_at'] }}){% endif %}: {{ t['admin_reply'] }}</p>{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+<h2 class="sec-title" id="faq">❓ الأسئلة الشائعة</h2>
+<div class="faq">
+  <details><summary>🚚 إزاي بتتحسب مصاريف الشحن؟</summary>
+    <p>الشحن بيتحدد حسب محافظتك وبيظهر في السلة وصفحة الدفع قبل التأكيد.{% if free_min > 0 %} والشحن <b>مجاني</b> للطلبات من {{ free_min|money }} ج.م فأكتر 🎉{% endif %} التوصيل بياخد 2-4 أيام عمل.</p></details>
+  <details><summary>💳 إيه طرق الدفع المتاحة؟</summary>
+    <p>كاش عند الاستلام، أو من رصيد المحفظة (كامل أو جزئي). وتقدر تشحن المحفظة بفودافون كاش / أورانج كاش / اتصالات كاش / انستاباي، والإدارة بتراجع الطلب وتضيف الرصيد.</p></details>
+  <details><summary>🟢 أقدر أطلب عن طريق واتساب؟</summary>
+    <p>أيوه! في السلة وصفحة المنتج وصفحة الدفع هتلاقي زرار «اطلب عبر واتساب» بيبعتلنا طلبك جاهز، من غير ما تحتاج تسجّل دخول.</p></details>
+  <details><summary>🛒 إيه معنى «الحد الأدنى للطلب» ووحدة البيع؟</summary>
+    <p>بعض المنتجات (زي الأكل) بتتباع بالكيلو أو العلبة أو الكرتونة وليها كمية دنيا للطلب، وبتظهر في صفحة المنتج. لو كتبت كمية أقل بنظبطها تلقائياً.</p></details>
+  <details><summary>🔄 إزاي أرجّع منتج؟</summary>
+    <p>بعد ما الطلب يوصلك عندك {{ 14 }} يوم تطلب الإرجاع من صفحة «طلباتي» والإدارة بتراجع الطلب وترد عليك.</p></details>
+  <details><summary>📦 إزاي أتابع طلبي؟</summary>
+    <p>من «طلباتي» هتشوف حالة الطلب لحظة بلحظة (قيد التجهيز ← تم الشحن ← تم التوصيل) وتقدر تحمّل الفاتورة.</p></details>
+</div>
+{% endblock %}

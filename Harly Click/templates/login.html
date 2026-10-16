@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}تسجيل الدخول | Harly Click{% endblock %}
+{% block content %}
+<div class="auth">
+  <h1>🔑 تسجيل الدخول</h1>
+  <form method="post" id="loginForm" class="form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="email" name="email" id="emailBox" placeholder="📧 الإيميل" required>
+    <input type="password" name="password" placeholder="🔒 كلمة السر" required>
+    <label class="chk"><input type="checkbox" id="rememberMe"> 💾 تذكرني على هذا الجهاز (حفظ بيانات الدخول في ذاكرة الجهاز)</label>
+    <button type="submit" class="btn-big">دخول 🚀</button>
+  </form>
+  <p>لسه معندكش حساب؟ <a href="{{ url_for('register') }}">اعمل حساب جديد</a></p>
+</div>
+{% endblock %}

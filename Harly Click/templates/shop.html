@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}المتجر | Harly Click{% endblock %}
+{% block content %}
+<div class="shop-head">
+  <h1>🛍️ المتجر</h1>
+  <form method="get" class="filters">
+    <select name="cat" onchange="this.form.submit()">
+      <option value="">كل الفئات</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {% if cat==c %}selected{% endif %}>{{ category_emoji.get(c, '') }} {{ c }}</option>
+      {% endfor %}
+    </select>
+    <select name="sort" onchange="this.form.submit()">
+      <option value="new" {% if sort=='new' %}selected{% endif %}>الأحدث</option>
+      <option value="best" {% if sort=='best' %}selected{% endif %}>الأكثر مبيعاً</option>
+      <option value="cheap" {% if sort=='cheap' %}selected{% endif %}>الأرخص</option>
+      <option value="exp" {% if sort=='exp' %}selected{% endif %}>الأغلى</option>
+    </select>
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+  </form>
+</div>
+{% if q %}<p>نتائج البحث عن: <b>{{ q }}</b> ({{ total_rows }} منتج)</p>{% endif %}
+
+{% if products %}
+<div class="grid">
+  {% for p in products %}
+  <div class="card">
+    {% if p['image'] %}<img class="p-img" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async" alt="{{ p['name'] }}">{% else %}<div class="img-box">{{ p['emoji'] }}</div>{% endif %}
+    {% if p['old_price'] %}<span class="off">-{{ ((1 - p['price']/p['old_price'])*100)|round|int }}%</span>{% endif %}
+    <h3>{{ p['name'] }}</h3>
+    <div class="price"><b>{{ p['price'] }} ج.م{{ unit_label(p) }}</b>{% if p['old_price'] %}<s>{{ p['old_price'] }} ج.م</s>{% endif %}</div>
+    {% if p['stock'] > 0 %}
+    <form method="post" action="{{ url_for('add_to_cart', pid=p['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" type="submit">🛒 أضف للسلة</button></form>
+    {% else %}<button class="btn" disabled>سيعود قريباً ⏳</button>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}<a href="{{ url_for('shop', q=q, cat=cat, sort=sort, page=page-1) }}">‹ السابق</a>{% endif %}
+  {% for i in range(1, pages+1) %}<a href="{{ url_for('shop', q=q, cat=cat, sort=sort, page=i) }}" class="{{ 'active' if i==page }}">{{ i }}</a>{% endfor %}
+  {% if page < pages %}<a href="{{ url_for('shop', q=q, cat=cat, sort=sort, page=page+1) }}">التالي ›</a>{% endif %}
+</div>
+{% endif %}
+{% else %}
+<p class="empty">مفيش منتجات مطابقة 😕 جرّب كلمة تانية</p>
+{% endif %}
+{% endblock %}

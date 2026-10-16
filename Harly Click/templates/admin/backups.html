@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}النسخ الاحتياطي | Harly Click{% endblock %}
+{% block content %}
+<h1>💾 النسخ الاحتياطي لقاعدة البيانات</h1>
+<div class="flash info">✅ بيتعمل نسخة <b>تلقائية كل يوم</b> (بتتحفظ آخر {{ keep }} يوم — تقدر تغيّر العدد من <a href="{{ url_for('admin_settings') }}">الإعدادات</a>) + نسخة تلقائية قبل أي حذف جماعي. الموقع لازم يكون شغّال عشان النسخة التلقائية تتعمل.</div>
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="now">
+  <button class="btn-big">💾 عمل نسخة احتياطية دلوقتي</button></form>
+<table class="table" style="margin-top:15px">
+  <tr><th>الملف</th><th>النوع</th><th>الحجم</th><th>التاريخ</th><th></th></tr>
+  {% for f in files %}
+  <tr><td dir="ltr">{{ f.name }}</td>
+      <td>{{ {'auto':'🤖 تلقائية','manual':'✋ يدوية','predelete':'🛡️ قبل حذف'}.get(f.tag, f.tag) }}</td>
+      <td>{{ (f.size/1024)|round(1) }} KB</td><td><small>{{ f.time }}</small></td>
+      <td><a class="btn small" href="{{ url_for('admin_backup_download', name=f.name) }}">⬇️ تحميل</a>
+        <form method="post" style="display:inline" onsubmit="return confirm('حذف النسخة دي؟')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="delete"><input type="hidden" name="name" value="{{ f.name }}"><button class="btn small danger">🗑️</button></form></td></tr>
+  {% else %}<tr><td colspan="5" class="empty">لسه مفيش نسخ — دوس الزرار فوق</td></tr>{% endfor %}
+</table>
+<h3 class="sec-title">♻️ إزاي أسترجع نسخة؟</h3>
+<p>1) وقّف الموقع. 2) حمّل النسخة وفك ضغطها (<code>gunzip</code> أو 7-Zip) هتطلع ملف <code>.db</code>. 3) سمّيه <code>harly_click.db</code> واستبدل بيه الملف القديم جنب <code>app.py</code>. 4) شغّل الموقع تاني.</p>
+<p><small>⚠️ النسخ فيها بيانات العملاء وهاشات كلمات السر — متشاركهاش مع حد. مكانها على السيرفر: <span dir="ltr">{{ backup_dir }}</span></small></p>
+{% endblock %}

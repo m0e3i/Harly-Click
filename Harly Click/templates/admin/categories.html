@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}إدارة الأقسام | Harly Click{% endblock %}
+{% block content %}
+<h1>🗂️ إدارة الأقسام</h1>
+<p>تحكم كامل في أقسام المتجر: أضف قسم جديد، غيّر اسمه، أو <b>أوقفه</b> — القسم الموقوف بيختفي هو ومنتجاته من الموقع (الرئيسية، المتجر، البحث، السلة) وترجعه في أي وقت بضغطة واحدة.</p>
+
+<form method="post" class="form admin-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="action" value="add">
+  <h3>➕ إضافة قسم جديد</h3>
+  <div class="row">
+    <input type="text" name="name" placeholder="اسم القسم (مثال: بقالة وأساسيات)" minlength="2" maxlength="40" required>
+    <input type="text" name="emoji" placeholder="إيموجي (اختياري) 🍎" maxlength="4">
+  </div>
+  <label class="chk"><input type="checkbox" name="show_home"> 🏠 يظهر كقسم مستقل في الصفحة الرئيسية</label>
+  <button type="submit" class="btn-big">إضافة القسم ✅</button>
+</form>
+
+<table class="table">
+  <tr><th>#</th><th>الاسم</th><th>إيموجي</th><th>الترتيب</th><th>في الرئيسية</th><th>المنتجات</th><th>الحالة</th><th>إجراءات</th></tr>
+  {% for c in cats %}
+  <tr>
+    <td>{{ c['id'] }}</td>
+    <td><input type="text" name="name" form="edit{{ c['id'] }}" value="{{ c['name'] }}" minlength="2" maxlength="40" required style="padding:6px;border:1px solid #ddd;border-radius:6px;width:150px"></td>
+    <td><input type="text" name="emoji" form="edit{{ c['id'] }}" value="{{ c['emoji'] or '' }}" maxlength="4" style="padding:6px;border:1px solid #ddd;border-radius:6px;width:60px;text-align:center"></td>
+    <td><input type="number" name="sort_order" form="edit{{ c['id'] }}" value="{{ c['sort_order'] }}" min="0" max="9999" style="padding:6px;border:1px solid #ddd;border-radius:6px;width:70px"></td>
+    <td><input type="checkbox" name="show_home" form="edit{{ c['id'] }}" {% if c['show_home'] %}checked{% endif %}></td>
+    <td>{{ c['pcount'] }}</td>
+    <td>{% if c['active'] %}<span class="status ok">✅ شغال</span>{% else %}<span class="status no">⏸️ موقوف</span>{% endif %}</td>
+    <td>
+      <form id="edit{{ c['id'] }}" method="post" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="edit"><input type="hidden" name="cat_id" value="{{ c['id'] }}">
+        <button class="btn small" type="submit">💾 حفظ</button>
+      </form>
+      <form method="post" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="toggle"><input type="hidden" name="cat_id" value="{{ c['id'] }}">
+        <button class="btn small {{ 'danger' if c['active'] }}" type="submit">{{ '⏸️ إيقاف' if c['active'] else '▶️ تفعيل' }}</button>
+      </form>
+      <form method="post" style="display:inline" onsubmit="return confirm('حذف القسم «{{ c['name'] }}»؟ (بيتحذف بس لو فاضي)')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="delete"><input type="hidden" name="cat_id" value="{{ c['id'] }}">
+        <button class="btn small danger" type="submit">🗑️</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p><a href="{{ url_for('admin') }}" class="btn">⬅️ لوحة التحكم</a></p>
+{% endblock %}

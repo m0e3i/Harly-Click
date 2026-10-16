@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ u['name'] }} | تفاصيل عميل | Harly Click{% endblock %}
+{% block content %}
+<h1>📂 {{ u['name'] }} {% if u['is_admin'] %}👑{% endif %}{% if not u['active'] %}<span class="status no">موقوف</span>{% endif %}</h1>
+<p><a href="{{ url_for('admin_users') }}" class="btn small">‹ كل العملاء</a>
+   <a href="{{ url_for('admin_payments', q=u['email']) }}" class="btn small">📜 مدفوعاته في السجل</a></p>
+
+<div class="wallet-grid">
+  <div style="flex:1;min-width:300px">
+    <h2 class="sec-title">✏️ تعديل الحساب</h2>
+    <form method="post" action="{{ url_for('admin_users') }}" class="form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="user_id" value="{{ u['id'] }}"><input type="hidden" name="action" value="edit">
+      <input type="hidden" name="next" value="{{ url_for('admin_user_detail', uid=u['id']) }}">
+      <label>الاسم</label><input type="text" name="name" value="{{ u['name'] }}" maxlength="80" required>
+      <label>الإيميل</label><input type="email" name="email" value="{{ u['email'] }}" required>
+      <label>الموبايل</label><input type="text" name="phone" value="{{ u['phone'] or '' }}" maxlength="30">
+      <label>العنوان</label><input type="text" name="address" value="{{ u['address'] or '' }}" maxlength="300">
+      <label>كلمة سر جديدة (اختياري — 8 حروف على الأقل)</label><input type="text" name="reset_password" autocomplete="off">
+      <button class="btn-big">💾 حفظ</button>
+    </form>
+    {% if not u['is_admin'] %}
+    <form method="post" action="{{ url_for('admin_users') }}" style="margin-top:10px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="user_id" value="{{ u['id'] }}"><input type="hidden" name="action" value="toggle">
+      <input type="hidden" name="next" value="{{ url_for('admin_user_detail', uid=u['id']) }}">
+      <button class="btn {{ 'danger' if u['active'] }}">{{ '⏸️ إيقاف الحساب' if u['active'] else '▶️ تفعيل الحساب' }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div style="flex:1;min-width:300px">
+    <h2 class="sec-title">💰 الرصيد: <span class="{{ 'green' if u['balance'] > 0 }}">{{ u['balance']|money }} ج.م</span></h2>
+    <form method="post" action="{{ url_for('admin_users') }}" class="form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="user_id" value="{{ u['id'] }}">
+      <input type="hidden" name="next" value="{{ url_for('admin_user_detail', uid=u['id']) }}">
+      <label>المبلغ</label><input type="number" name="amount" min="0" step="0.01" required>
+      <label>السبب (يظهر في سجل الحركات)</label><input type="text" name="note" maxlength="100">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button name="action" value="balance" formaction="{{ url_for('admin_users') }}" class="btn small" onclick="this.form.dir.value='add'">➕ إضافة</button>
+        <button name="action" value="balance" class="btn small danger" onclick="this.form.dir.value='deduct';return confirm('خصم من الرصيد؟')">➖ خصم</button>
+        <button name="action" value="balance_set" class="btn small" onclick="return confirm('ضبط الرصيد على القيمة دي بالظبط؟')">🎯 ضبط الرصيد على هذا المبلغ</button>
+        <button name="action" value="balance_zero" formnovalidate class="btn small danger" onclick="return confirm('حذف (تصفير) رصيد العميل؟')">🧹 تصفير</button>
+      </div>
+      <input type="hidden" name="dir" value="add">
+    </form>
+  </div>
+</div>
+
+<h2 class="sec-title">📊 سجل حركات الرصيد (آخر 100)</h2>
+<table class="table">
+  <tr><th>#</th><th>المبلغ</th><th>النوع</th><th>ملاحظة</th><th>التاريخ</th></tr>
+  {% for t in txs %}
+  <tr><td>{{ t['id'] }}</td><td class="{{ 'green' if t['amount'] > 0 else 'red' }}"><b>{{ '%+.2f'|format(t['amount']) }} ج.م</b></td>
+      <td>{{ tx_types.get(t['type'], t['type']) }}</td><td>{{ t['note'] or '-' }}</td><td><small>{{ t['created_at'] }}</small></td></tr>
+  {% else %}<tr><td colspan="5" class="empty">مفيش حركات</td></tr>{% endfor %}
+</table>
+
+<h2 class="sec-title">🧾 طلباته</h2>
+<table class="table">
+  <tr><th>#</th><th>الإجمالي</th><th>الشحن</th><th>الحالة</th><th>التاريخ</th><th></th></tr>
+  {% for o in orders %}
+  <tr><td>{{ o['id'] }}</td><td>{{ o['total']|money }} ج.م</td><td>{{ (o['shipping'] or 0)|money }}</td><td><span class="status">{{ o['status'] }}</span></td>
+      <td><small>{{ o['created_at'] }}</small></td>
+      <td><a href="{{ url_for('invoice', oid=o['id']) }}" target="_blank" class="btn small">🧾</a>
+          <a href="{{ url_for('admin_waybills', ids=o['id']) }}" target="_blank" class="btn small">🚚</a></td></tr>
+  {% else %}<tr><td colspan="6" class="empty">مفيش طلبات</td></tr>{% endfor %}
+</table>
+
+{% if not u['is_admin'] %}
+<h2 class="sec-title">🗑️ منطقة الخطر</h2>
+<form method="post" action="{{ url_for('admin_users') }}" onsubmit="return confirm('⚠️ حذف نهائي للحساب وكل بياناته (المحفظة والمفضلة)! الطلبات القديمة هتفضل محفوظة للمحاسبة.')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="user_id" value="{{ u['id'] }}"><input type="hidden" name="action" value="delete">
+  <button class="btn danger">🗑️ حذف الحساب نهائياً</button>
+</form>
+{% endif %}
+{% endblock %}

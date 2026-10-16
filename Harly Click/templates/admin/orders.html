@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}إدارة الطلبات | Harly Click{% endblock %}
+{% block content %}
+<h1>🧾 إدارة الطلبات</h1>
+
+<!-- ✅ جديد: فلتر حالات الطلبات -->
+<p>
+  <a href="{{ url_for('admin_orders') }}" class="btn small {{ 'danger' if not status_filter }}">الكل</a>
+  {% for s in statuses %}
+  <a href="{{ url_for('admin_orders', status=s) }}" class="btn small {{ 'danger' if status_filter==s }}">{{ s }}</a>
+  {% endfor %}
+</p>
+
+<form method="get" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0">
+  {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+  <label>من <input type="date" name="from" value="{{ dfrom }}" style="padding:6px;border:1px solid #ddd;border-radius:6px"></label>
+  <label>إلى <input type="date" name="to" value="{{ dto }}" style="padding:6px;border:1px solid #ddd;border-radius:6px"></label>
+  <button class="btn small">🔍 فلترة</button>
+  {% if dfrom or dto %}<a class="btn small" href="{{ url_for('admin_orders', status=status_filter or None) }}">✖ مسح التاريخ</a>{% endif %}
+</form>
+<p>
+  <a class="btn small" href="{{ url_for('admin_orders_export', format='xlsx', status=status_filter, **{'from': dfrom, 'to': dto}) }}">⬇️ تصدير Excel</a>
+  <a class="btn small" href="{{ url_for('admin_orders_export', format='csv', status=status_filter, **{'from': dfrom, 'to': dto}) }}">⬇️ تصدير CSV</a>
+  <a class="btn small" target="_blank" href="{{ url_for('admin_waybills', status=status_filter, **{'from': dfrom, 'to': dto}) }}">🖨️ طباعة بوليصات كل الطلبات المعروضة ({{ orders|length }})</a>
+</p>
+
+{% for o in orders %}
+<div class="order-box">
+  <div class="order-head">
+    <b>طلب #{{ o['id'] }}</b> — {{ o['uname'] or 'زائر' }} ({{ o['email'] or '-' }})
+    — <b>{{ o['total'] }} ج.م</b>{% if o['discount'] %} <span class="green">(خصم {{ o['discount'] }})</span>{% endif %}
+    <form method="post" action="{{ url_for('order_status', oid=o['id']) }}" class="status-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <select name="status" onchange="this.form.submit()">
+        {% for s in statuses %}
+        <option value="{{ s }}" {% if o['status']==s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <!-- ✅ جديد: زر الفاتورة -->
+    <a href="{{ url_for('invoice', oid=o['id']) }}" target="_blank" class="btn small">🧾 فاتورة</a>
+    <a href="{{ url_for('admin_waybills', ids=o['id']) }}" target="_blank" class="btn small">🚚 بوليصة شحن</a>
+    <small>{{ o['created_at'] }}</small>
+  </div>
+  <p>📞 {{ o['phone'] }} — 📍 {{ o['governorate'] ~ ' — ' if o['governorate'] else '' }}{{ o['address'] }}</p>
+  {% if o['governorate'] or o['shipping'] %}<p>🚚 الشحن: {% if o['shipping'] %}<b>{{ o['shipping']|money }} ج.م</b>{% else %}<b class="green">مجاني</b>{% endif %}</p>{% endif %}
+  <p>💳 الدفع:
+    {% if o['payment_method'] == 'cod' %}💵 كاش عند الاستلام — المطلوب تحصيل <b class="red">{{ o['total'] }} ج.م</b>{% endif %}
+    {% if o['payment_method'] == 'balance' %}💰 مدفوع كامل من الرصيد ✅{% endif %}
+    {% if o['payment_method'] == 'partial' %}💸 دفع {{ o['paid'] }} ج.م من الرصيد — الباقي عند الاستلام: <b class="red">{{ o['total'] - o['paid'] }} ج.م</b>{% endif %}
+  </p>
+  <ul>
+    {% for it in details[o['id']] %}
+    <li>{{ it['name'] }} × {{ it['qty'] }}{% if (it['unit'] or 'قطعة') != 'قطعة' %} {{ it['unit'] }}{% endif %} = {{ it['price']*it['qty'] }} ج.م</li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<p class="empty">مفيش طلبات لسه</p>
+{% endfor %}
+{% endblock %}

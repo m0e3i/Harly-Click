@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}من نحن | Harly Click{% endblock %}
+{% block content %}
+<div class="done">
+  <h1>⚡ من نحن</h1>
+  <p><b>Harly Click</b> سوبر ماركت أونلاين مصري بدأ بحلم بسيط: نوفر كل احتياجات بيتك من بقالة وخضروات وفاكهة ولحوم وألبان بأسعار محلية، ونوصلها لباب بيتك في أسرع وقت.</p>
+  <div class="hero-feats">
+    <span>📦 +5000 منتج</span><span>😊 +20,000 عميل سعيد</span><span>🚚 27 محافظة</span><span>⭐ 4.8/5 تقييم</span>
+  </div>
+  <h3 style="margin-top:25px">✨ ليه تختار Harly Click؟</h3>
+  <p>✅ منتجات أصلية 100% بضمان استرجاع خلال 14 يوم<br>
+     ✅ شحن سريع لكل المحافظات خلال 2-4 أيام<br>
+     ✅ دفع آمن: عند الاستلام أو أونلاين<br>
+     ✅ دعم فني 24/7 بيرد عليك في دقايق</p>
+  <a href="{{ url_for('shop') }}" class="btn-big">ابدأ التسوق 🛍️</a>
+</div>
+{% endblock %}

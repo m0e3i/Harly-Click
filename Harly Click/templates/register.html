@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}حساب جديد | Harly Click{% endblock %}
+{% block content %}
+<div class="auth">
+  <h1>📝 حساب جديد</h1>
+  <form method="post" class="form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>الاسم</label>
+    <input type="text" name="name" required>
+    <label>الإيميل</label>
+    <input type="email" name="email" required>
+    <label>كلمة السر (8 حروف على الأقل)</label>
+    <input type="password" name="password" minlength="8" required>
+    <button type="submit" class="btn-big">إنشاء الحساب ✅</button>
+  </form>
+  <p>عندك حساب؟ <a href="{{ url_for('login') }}">سجّل دخولك</a></p>
+</div>
+{% endblock %}

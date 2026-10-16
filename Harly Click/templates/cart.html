@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}السلة | Harly Click{% endblock %}
+{% block content %}
+<h1>🛒 سلة المشتريات</h1>
+{% if items %}
+<table class="table">
+  <tr><th>المنتج</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th><th></th></tr>
+  {% for it in items %}
+  <tr>
+    <td>{{ it.p['emoji'] }} {{ it.p['name'] }}{% if (it.p['unit'] or 'قطعة') != 'قطعة' %} <small>({{ it.p['unit'] }})</small>{% endif %}{% if (it.p['min_order'] or 1) > 1 %}<br><small>🔖 الحد الأدنى {{ it.p['min_order'] }}</small>{% endif %}</td>
+    <td>{{ it.p['price'] }} ج.م{{ unit_label(it.p) }}</td>
+    <td>
+      <form method="post" action="{{ url_for('update_cart', pid=it.p['id']) }}" class="qty-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="number" name="qty" value="{{ it.qty }}" min="0">
+        <button type="submit">✔</button>
+      </form>
+    </td>
+    <td>{{ it.p['price'] * it.qty }} ج.م</td>
+    <td><a href="{{ url_for('remove_from_cart', pid=it.p['id']) }}" class="del">✖</a></td>
+  </tr>
+  {% endfor %}
+</table>
+
+<div class="cart-total">
+  {% if not coupon %}
+  <form method="post" action="{{ url_for('apply_coupon') }}" class="coupon-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="code" placeholder="🎟️ كود الخصم">
+    <button type="submit" class="btn">طبّق الكوبون</button>
+  </form>
+  {% else %}
+  <p>🎟️ الكوبون <b>{{ coupon }}</b> مفعّل — <a href="{{ url_for('remove_coupon') }}">إلغاء</a></p>
+  {% endif %}
+  <p>المجموع الفرعي: {{ subtotal }} ج.م</p>
+  {% if discount %}<p class="green">الخصم: -{{ discount }} ج.م 🎉</p>{% endif %}
+  {% if ship.enabled %}
+  <form method="post" action="{{ url_for('cart_set_gov') }}" class="coupon-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="governorate" onchange="this.form.submit()" style="padding:9px;border:1px solid #ddd;border-radius:8px">
+      <option value="">🚚 اختار المحافظة لحساب الشحن</option>
+      {% for z in zones %}<option value="{{ z['governorate'] }}" {% if z['governorate'] == ship.gov %}selected{% endif %}>{{ z['governorate'] }}</option>{% endfor %}
+    </select>
+    <noscript><button type="submit" class="btn">تطبيق</button></noscript>
+  </form>
+  {% if ship.gov and ship.known %}<p>🚚 الشحن إلى {{ ship.gov }}: {% if ship.free %}<b class="green">مجاني 🎉</b>{% else %}<b>{{ ship.fee|money }} ج.م</b>{% endif %}</p>
+  {% elif ship.free %}<p class="green">🚚 الشحن: مجاني 🎉</p>
+  {% else %}<p>🚚 مصاريف الشحن بتتحدد حسب المحافظة</p>{% endif %}
+  {% if ship.free_min > 0 and not ship.free %}<p>🎁 ضيف بـ <b>{{ ship.remaining|money }}</b> ج.م كمان واحصل على <b>شحن مجاني</b></p>{% endif %}
+  {% endif %}
+  <h3>الإجمالي: {{ (total + ship.fee)|money }} ج.م{% if ship.enabled and not ship.known %} <small>(قبل الشحن)</small>{% endif %}</h3>
+  <a href="{{ url_for('checkout') }}" class="btn-big">إتمام الطلب 💳</a>
+  {% if whatsapp_on %}
+  <a href="{{ url_for('cart_whatsapp') }}" class="btn-big btn-wa" target="_blank" rel="noopener">🟢 اطلب عبر واتساب</a>
+  {% endif %}
+</div>
+{% else %}
+<p class="empty">سلتك فاضية 🛒... <a href="{{ url_for('shop') }}">ابدأ التسوق</a></p>
+{% endif %}
+{% endblock %}

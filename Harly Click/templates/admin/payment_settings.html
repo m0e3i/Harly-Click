@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}طرق الدفع | Harly Click{% endblock %}
+{% block content %}
+<h1>💳 طرق الدفع وأرقام التحويل</h1>
+<form method="post" class="form" style="max-width:680px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h3>📲 شحن رصيد المحفظة</h3>
+  <label>📞 رقم التحويل العام (بيظهر للعميل لو الوسيلة معندهاش رقم خاص)</label>
+  <input type="text" name="transfer_number" value="{{ glob }}" maxlength="60" required style="padding:11px;border:1px solid #ddd;border-radius:8px" dir="ltr">
+  <table class="table">
+    <tr><th>الوسيلة</th><th>رقم خاص بيها (اختياري)</th><th>مفعّلة</th></tr>
+    {% for m in methods %}
+    <tr {% if not m.on %}style="opacity:.6"{% endif %}>
+      <td>{{ m.label }}</td>
+      <td><input type="text" name="num_{{ m.key }}" value="{{ m.own_number }}" placeholder="الافتراضي: {{ glob }}" maxlength="60" dir="ltr" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:6px"></td>
+      <td><label class="chk"><input type="checkbox" name="on_{{ m.key }}" {% if m.on %}checked{% endif %}> {{ '✅' if m.on else '⏸️' }}</label></td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p><small>لو وقفت كل الوسائل، شحن الرصيد بيتوقف عند العملاء. الرقم بيتغيّر عند العميل فوراً. رقم انستاباي ممكن يبقى عنوان زي name@instapay.</small></p>
+
+  <h3 style="margin-top:14px">🛒 طرق الدفع وقت الشراء</h3>
+  {% for k, label in checkout_list %}
+  <label class="chk" style="padding:12px;background:#fafafa;border-radius:10px">
+    <input type="checkbox" name="co_{{ k }}" {% if co[k] %}checked{% endif %}> {{ label }}
+  </label>
+  {% endfor %}
+  <p><small>لازم تفضل طريقة واحدة على الأقل شغالة.</small></p>
+  <button class="btn-big">💾 حفظ</button>
+</form>
+{% endblock %}

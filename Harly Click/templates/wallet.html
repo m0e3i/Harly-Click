@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}المحفظة | Harly Click{% endblock %}
+{% block content %}
+<h1>💰 محفظتي</h1>
+<div class="wallet-grid">
+  <div class="balance-card">
+    <span>رصيدك الحالي</span>
+    <b>{{ balance }} ج.م</b>
+    <small>تقدر تشتري بيه من الموقع على طول ✅</small>
+  </div>
+  {% if methods %}
+  <form method="post" action="{{ url_for('wallet_request') }}" class="form wallet-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3>📲 اشحن رصيدك</h3>
+    <label>المبلغ (ج.م)</label>
+    <input type="number" name="amount" min="10" step="1" placeholder="مثال: 500" required>
+    <label>وسيلة التحويل</label>
+    <select name="method">
+      {% for m in methods %}<option value="{{ m.key }}">{{ m.label }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn-big">استمرار ←</button>
+  </form>
+  {% else %}
+  <div class="form wallet-form"><h3>📲 اشحن رصيدك</h3><p class="empty">شحن الرصيد متوقف مؤقتاً — تواصل مع الدعم لو محتاج مساعدة 🎧</p></div>
+  {% endif %}
+</div>
+
+<h2 class="sec-title">🧾 طلبات الشحن</h2>
+{% if reqs %}
+<table class="table">
+  <tr><th>#</th><th>المبلغ</th><th>الوسيلة</th><th>الحالة</th><th>التاريخ</th></tr>
+  {% for r in reqs %}
+  <tr>
+    <td>{{ r['id'] }}</td><td><b>{{ r['amount'] }} ج.م</b></td>
+    <td>{{ pay_methods.get(r['method'], r['method']) }}</td>
+    <td>
+      {% if r['status'] == 'pending' %}<span class="status">⏳ بانتظار المراجعة</span>
+      {% elif r['status'] == 'approved' %}<span class="status ok">✅ تمت الموافقة</span>
+      {% else %}<span class="status no">❌ مرفوض</span>{% endif %}
+    </td>
+    <td><small>{{ r['created_at'] }}</small></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">لسه ما طلبتش شحن رصيد</p>
+{% endif %}
+
+<h2 class="sec-title">📊 حركات الرصيد</h2>
+{% if txs %}
+<table class="table">
+  <tr><th>المبلغ</th><th>النوع</th><th>ملاحظة</th><th>التاريخ</th></tr>
+  {% for t in txs %}
+  <tr>
+    <td class="{{ 'green' if t['amount'] > 0 else 'red' }}"><b>{{ '%+.2f'|format(t['amount']) }} ج.م</b></td>
+    <td>{{ {'recharge':'📲 شحن', 'purchase':'🛒 شراء', 'admin':'⚙️ تعديل إدارة'}.get(t['type'], t['type']) }}</td>
+    <td>{{ t['note'] or '-' }}</td>
+    <td><small>{{ t['created_at'] }}</small></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">مفيش حركات لسه</p>
+{% endif %}
+{% endblock %}

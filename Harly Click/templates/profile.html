@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}الملف الشخصي | Harly Click{% endblock %}
+{% block content %}
+<h1>👤 الملف الشخصي</h1>
+<div class="stats">
+  <div class="stat">📦<b>{{ stats.orders }}</b><span>طلب</span></div>
+  <div class="stat">💸<b>{{ stats.spent|round|int }}</b><span>إجمالي المشتريات (ج.م)</span></div>
+  <div class="stat">❤️<b>{{ stats.wish }}</b><span>مفضلة</span></div>
+  <div class="stat">💰<b>{{ stats.balance }}</b><span>الرصيد (ج.م)</span></div>
+</div>
+<form method="post" class="form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h3>✏️ بياناتي</h3>
+  <input type="text" name="name" value="{{ u['name'] }}" required>
+  <input type="email" name="email" value="{{ u['email'] }}" disabled style="background:#eee">
+  <input type="text" name="phone" value="{{ u['phone'] or '' }}" placeholder="📞 الموبايل">
+  <textarea name="address" placeholder="📍 العنوان">{{ u['address'] or '' }}</textarea>
+  <h3>🔒 تغيير كلمة السر (اختياري)</h3>
+  <input type="password" name="current_password" placeholder="كلمة السر الحالية">
+  <input type="password" name="new_password" minlength="8" placeholder="كلمة السر الجديدة (8 حروف على الأقل)">
+  <button class="btn-big">حفظ التعديلات ✅</button>
+</form>
+<div class="form" style="margin-top:20px">
+  <h3>🗄️ بياناتي (حفظ / تصدير / حذف)</h3>
+  <a href="{{ url_for('profile_export') }}" class="btn">⬇️ تصدير بياناتي (JSON)</a>
+  <form method="post" action="{{ url_for('profile_delete') }}" onsubmit="return confirm('⚠️ هل أنت متأكد؟ حذف الحساب نهائي ولا يمكن التراجع!')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="password" name="password" placeholder="🔒 كلمة السر للتأكيد" required>
+    <button class="btn danger">🗑️ حذف حسابي نهائياً</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}الكوبونات | Harly Click{% endblock %}
+{% block content %}
+<h1>🎟️ كوبونات الخصم</h1>
+<form method="post" class="form admin-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h3>➕ كوبون جديد</h3>
+  <div class="row">
+    <input type="text" name="code" placeholder="الكود (مثال: SUMMER30)" required>
+    <input type="number" name="percent" placeholder="نسبة الخصم %" min="1" max="90" required>
+    <input type="date" name="expires" title="تاريخ الانتهاء (اختياري)">
+  </div>
+  <button type="submit" class="btn-big">إنشاء الكوبون 🎟️</button>
+</form>
+<table class="table">
+  <tr><th>الكود</th><th>الخصم</th><th>ينتهي</th><th>الحالة</th><th></th></tr>
+  {% for c in coupons %}
+  <tr>
+    <td><b>{{ c['code'] }}</b></td><td>{{ c['percent'] }}%</td>
+    <td>{{ c['expires'] or 'مفتوح' }}</td>
+    <td>{{ '✅ مفعّل' if c['active'] else '⛔ متوقف' }}</td>
+    <td><a href="{{ url_for('admin_coupons', toggle=c['code'], _t=csrf_token()) }}" class="btn small">{{ 'إيقاف' if c['active'] else 'تفعيل' }}</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

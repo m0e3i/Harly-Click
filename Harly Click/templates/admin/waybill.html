@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<title>بوليصة شحن | Harly Click</title>
+<link rel="stylesheet" href="{{ static_v('style.css') }}">
+<style>
+  body{background:#eee}
+  .bar{max-width:420px;margin:12px auto;text-align:center}
+  .wb{width:100mm;min-height:140mm;margin:12px auto;background:#fff;border:2px solid #000;padding:4mm;box-sizing:border-box;font-size:12px;line-height:1.6;page-break-after:always;break-after:page}
+  .wb h2{font-size:16px;margin:0;display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:4px}
+  .wb .box{border:1px solid #000;padding:5px 7px;margin:6px 0}
+  .wb .lbl{font-size:10px;color:#555;display:block}
+  .wb .big{font-size:15px;font-weight:bold}
+  .wb .cod{border:3px solid #000;text-align:center;padding:6px;margin:6px 0;font-size:18px;font-weight:bold}
+  .wb .bc{text-align:center;margin-top:6px;direction:ltr}
+  .wb .bc svg{max-width:100%;height:auto}
+  .wb ul{margin:3px 0;padding-right:16px}
+  @page{size:A6;margin:3mm}
+  @media print{body{background:#fff}.bar{display:none}.wb{margin:0;border-width:1.5px}}
+</style>
+</head>
+<body>
+<div class="bar"><button class="btn-big" onclick="window.print()">🖨️ طباعة ({{ bills|length }} بوليصة)</button>
+  <a class="btn-big ghost" href="{{ url_for('admin_orders') }}">‹ رجوع</a>
+  <p><small>المقاس المناسب: A6 (10×14.8 سم) — أو اطبعها على A4 والمتصفح هيوزعها.</small></p></div>
+{% for b in bills %}{% set o = b.o %}
+<div class="wb">
+  <h2><span>⚡ Harly Click</span><span>{{ b.code }}</span></h2>
+  <div class="box"><span class="lbl">📤 من (المرسل)</span><b>Harly Click</b> — 📞 {{ store.phone }}{% if store.address %}<br>{{ store.address }}{% endif %}</div>
+  <div class="box"><span class="lbl">📥 إلى (المستلم)</span>
+    <span class="big">{{ o['uname'] or 'عميل' }}</span><br>
+    📞 <b>{{ o['phone'] }}</b><br>
+    📍 {% if o['governorate'] %}<b>{{ o['governorate'] }}</b> — {% endif %}{{ o['address'] }}</div>
+  <div class="cod">{% if b.cod > 0 %}💵 تحصيل عند الاستلام: {{ b.cod|money }} ج.م{% else %}✅ مدفوع بالكامل — لا يوجد تحصيل{% endif %}</div>
+  <div class="box"><span class="lbl">📦 المحتويات — طلب #{{ o['id'] }} — {{ o['created_at'][:10] }}</span>
+    <ul>{% for it in b['items'] %}<li>{{ it['name'] }} × {{ it['qty'] }}{% if (it['unit'] or 'قطعة') != 'قطعة' %} {{ it['unit'] }}{% endif %}</li>{% endfor %}</ul>
+    <small>الشحن: {{ (o['shipping'] or 0)|money }} ج.م — الإجمالي: {{ o['total']|money }} ج.م</small></div>
+  <div class="bc">{{ b.barcode }}<div style="font-family:monospace;letter-spacing:2px">{{ b.code }}</div></div>
+  <div style="text-align:center;font-size:10px;margin-top:4px">طُبعت: {{ now }}</div>
+</div>
+{% endfor %}
+</body>
+</html>

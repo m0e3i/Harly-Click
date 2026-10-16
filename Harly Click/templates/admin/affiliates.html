@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}التسويق بالعمولة | Harly Click{% endblock %}
+{% block content %}
+<h1>🤝 إدارة التسويق بالعمولة</h1>
+<p>نظام: خصم <b>{{ disc }}%</b> للمشتري + عمولة <b>{{ comm }}%</b> للمسوق — تعليق <b>{{ hold }} يوم</b> ضد الاحتيال 🛡️</p>
+
+<h2 class="sec-title">👥 المسوقون</h2>
+<table class="table">
+  <tr><th>#</th><th>الاسم</th><th>الإيميل</th><th>الكود</th><th>الطلبات</th><th>متحققة</th><th>معلقة</th><th>الحالة</th><th>إجراء</th></tr>
+  {% for m in marketers %}
+  <tr>
+    <td>{{ m['id'] }}</td><td>{{ m['name'] }}</td><td><small>{{ m['email'] }}</small></td>
+    <td><b>{{ m['code'] }}</b></td><td>{{ m['orders_count'] }}</td>
+    <td class="green">{{ m['paid']|round(2) }} ج.م</td>
+    <td>{{ m['pending']|round(2) }} ج.م</td>
+    <td>{% if m['active'] %}<span class="status ok">✅ نشط</span>{% else %}<span class="status">⏳ بانتظار تفعيل</span>{% endif %}</td>
+    <td>
+      <a href="{{ url_for('admin_affiliates', toggle=m['id'], _t=csrf_token()) }}" class="btn small {{ 'danger' if m['active'] }}">{{ '⏸️ إيقاف' if m['active'] else '▶️ تفعيل' }}</a>
+      <a href="{{ url_for('admin_affiliates', mid=m['id']) }}" class="btn small">📋 الطلبات</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% if aff_orders %}
+<h2 class="sec-title">📋 طلبات المسوق المحدد</h2>
+<table class="table">
+  <tr><th>#</th><th>الطلب</th><th>إيميل المشتري</th><th>IP</th><th>إجمالي الطلب</th><th>عمولة</th><th>تتفك</th><th>الحالة</th><th>إجراء</th></tr>
+  {% for a in aff_orders %}
+  <tr>
+    <td>{{ a['id'] }}</td><td>#{{ a['order_id'] }}</td>
+    <td><small>{{ a['buyer_email'] }}</small></td><td><small>{{ a['buyer_ip'] }}</small></td>
+    <td>{{ a['order_total'] }} ج.م</td><td><b>{{ a['commission'] }} ج.م</b></td>
+    <td><small>{{ a['hold_until'] }}</small></td>
+    <td>
+      {% if a['status']=='confirmed' %}<span class="status ok">✅ متحققة</span>
+      {% elif a['status']=='cancelled' %}<span class="status no">❌ ملغاة</span>
+      {% else %}<span class="status">⏳ معلقة</span>{% endif %}
+      {% if a['flag'] %}🚩{% endif %}
+    </td>
+    <td>
+      {% if a['status']=='pending' %}
+      <a href="{{ url_for('admin_affiliates', confirm=a['id'], mid=mid, _t=csrf_token()) }}" class="btn small" onclick="return confirm('تأكيد العمولة يدوياً؟')">✅ تأكيد</a>
+      <a href="{{ url_for('admin_affiliates', cancel=a['id'], mid=mid, _t=csrf_token()) }}" class="btn small danger" onclick="return confirm('إلغاء العمولة؟')">❌ إلغاء</a>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2 class="sec-title">🚩 حالات مشبوهة (مكافحة الاحتيال)</h2>
+{% if flagged %}
+<table class="table">
+  <tr><th>#</th><th>الكود</th><th>الطلب</th><th>IP</th><th>السبب</th></tr>
+  {% for f in flagged %}
+  <tr><td>{{ f['id'] }}</td><td>{{ f['code'] }}</td><td>#{{ f['order_id'] }}</td><td>{{ f['buyer_ip'] }}</td><td>{{ f['flag_reason'] or '-' }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">مفيش حالات مشبوهة 🎉 النظام شغال:</p>
+<ul style="padding-right:25px;line-height:2">
+  <li>🚫 المسوق ميعملش طلب بكوده الخاص</li>
+  <li>🔁 نفس الإيميل يستخدم الكود 3 مرات بس في الشهر</li>
+  <li>📡 نفس الـ IP ميستخدمش نفس الكود مرتين في 24 ساعة</li>
+  <li>⏳ العمولة معلقة {{ hold }} يوم — تتلغي تلقائياً لو الطلب اتلغي أو اتعمل له إرجاع</li>
+</ul>
+{% endif %}
+{% endblock %}

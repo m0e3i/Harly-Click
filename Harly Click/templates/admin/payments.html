@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}سجل المدفوعات | Harly Click{% endblock %}
+{% block content %}
+{% set qs = {'kind': fl.kind, 'q': fl.q, 'type': fl.type, 'from': fl['from'], 'to': fl.to} %}
+<h1>📜 سجل المدفوعات</h1>
+<p>
+  <a class="btn small {{ 'danger' if fl.kind=='tx' }}" href="{{ url_for('admin_payments', kind='tx') }}">📊 حركات الرصيد</a>
+  <a class="btn small {{ 'danger' if fl.kind=='req' }}" href="{{ url_for('admin_payments', kind='req') }}">📲 طلبات الشحن</a>
+  <a class="btn small {{ 'danger' if fl.kind=='orders' }}" href="{{ url_for('admin_payments', kind='orders') }}">🧾 مدفوعات الطلبات</a>
+</p>
+<form method="get" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0">
+  <input type="hidden" name="kind" value="{{ fl.kind }}">
+  <input type="text" name="q" value="{{ fl.q }}" placeholder="🔍 اسم أو إيميل العميل" style="padding:7px;border:1px solid #ddd;border-radius:6px">
+  <select name="type" style="padding:7px;border:1px solid #ddd;border-radius:6px">
+    <option value="">{{ 'كل الحالات' if fl.kind=='req' else ('كل الطرق' if fl.kind=='orders' else 'كل الأنواع') }}</option>
+    {% if fl.kind=='tx' %}{% for k, v in tx_types.items() %}<option value="{{ k }}" {% if fl.type==k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+    {% elif fl.kind=='req' %}{% for k, v in {'pending':'معلق','approved':'موافق','rejected':'مرفوض'}.items() %}<option value="{{ k }}" {% if fl.type==k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+    {% else %}{% for k, v in {'cod':'كاش عند الاستلام','balance':'من الرصيد','partial':'جزئي'}.items() %}<option value="{{ k }}" {% if fl.type==k %}selected{% endif %}>{{ v }}</option>{% endfor %}{% endif %}
+  </select>
+  <label>من <input type="date" name="from" value="{{ fl['from'] }}" style="padding:6px;border:1px solid #ddd;border-radius:6px"></label>
+  <label>إلى <input type="date" name="to" value="{{ fl.to }}" style="padding:6px;border:1px solid #ddd;border-radius:6px"></label>
+  <button class="btn small">🔍 فلترة</button>
+  <a class="btn small" href="{{ url_for('admin_payments', kind=fl.kind) }}">✖ مسح</a>
+</form>
+<p>
+  <a class="btn small" href="{{ url_for('admin_payments_export', format='xlsx', **qs) }}">⬇️ تصدير Excel ({{ {'tx':'حركات الرصيد','req':'طلبات الشحن','orders':'مدفوعات الطلبات'}[fl.kind] }})</a>
+  <a class="btn small" href="{{ url_for('admin_payments_export', format='csv', **qs) }}">⬇️ CSV</a>
+  <a class="btn small" href="{{ url_for('admin_payments_export', format='xlsx', kind='all', q=fl.q, **{'from': fl['from'], 'to': fl.to}) }}">⬇️ Excel شامل (3 شيتات)</a>
+</p>
+<p><b>{{ total_rows }}</b> سجل —
+  {% if fl.kind=='tx' %}إضافات: <b class="green">{{ sums['in']|money }}</b> ج.م — خصومات: <b class="red">{{ sums['out']|money }}</b> ج.م
+  {% elif fl.kind=='req' %}إجمالي الشحن الموافق عليه: <b class="green">{{ sums['in']|money }}</b> ج.م
+  {% else %}إجمالي الطلبات: <b>{{ sums['out']|money }}</b> ج.م — المدفوع مقدماً: <b class="green">{{ sums['in']|money }}</b> ج.م{% endif %}</p>
+
+{% if fl.kind != 'orders' %}
+<form method="post" id="delForm"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="scope" value="selected">
+  {% for k, v in qs.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+{% endif %}
+<table class="table">
+  {% if fl.kind=='tx' %}
+  <tr><th><input type="checkbox" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked)"></th><th>#</th><th>العميل</th><th>المبلغ</th><th>النوع</th><th>ملاحظة</th><th>التاريخ</th></tr>
+  {% for r in rows %}<tr><td><input type="checkbox" class="rowchk" name="ids" value="{{ r['id'] }}"></td><td>{{ r['id'] }}</td>
+    <td><a href="{{ url_for('admin_user_detail', uid=r['user_id']) }}">{{ r['uname'] }}</a><br><small>{{ r['email'] }}</small></td>
+    <td class="{{ 'green' if r['amount'] > 0 else 'red' }}"><b>{{ '%+.2f'|format(r['amount']) }} ج.م</b></td>
+    <td>{{ tx_types.get(r['type'], r['type']) }}</td><td>{{ r['note'] or '-' }}</td><td><small>{{ r['created_at'] }}</small></td></tr>
+  {% else %}<tr><td colspan="7" class="empty">مفيش سجلات</td></tr>{% endfor %}
+  {% elif fl.kind=='req' %}
+  <tr><th><input type="checkbox" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked)"></th><th>#</th><th>العميل</th><th>المبلغ</th><th>الوسيلة</th><th>رقم المحوّل</th><th>الحالة</th><th>التاريخ</th></tr>
+  {% for r in rows %}<tr><td>{% if r['status'] != 'pending' %}<input type="checkbox" class="rowchk" name="ids" value="{{ r['id'] }}">{% endif %}</td><td>{{ r['id'] }}</td>
+    <td><a href="{{ url_for('admin_user_detail', uid=r['user_id']) }}">{{ r['uname'] }}</a></td><td><b>{{ r['amount']|money }} ج.م</b></td>
+    <td>{{ pay_methods.get(r['method'], r['method']) }}</td><td>{{ r['sender_number'] or '—' }}</td>
+    <td>{{ {'pending':'⏳ معلق','approved':'✅ موافق','rejected':'❌ مرفوض'}[r['status']] }}</td><td><small>{{ r['created_at'] }}</small></td></tr>
+  {% else %}<tr><td colspan="8" class="empty">مفيش سجلات</td></tr>{% endfor %}
+  {% else %}
+  <tr><th>رقم الطلب</th><th>العميل</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th></tr>
+  {% for r in rows %}<tr><td>{{ r['id'] }}</td><td>{{ r['uname'] or 'حساب محذوف' }}</td><td>{{ r['total']|money }}</td><td>{{ (r['paid'] or 0)|money }}</td>
+    <td>{{ ([r['total'] - (r['paid'] or 0), 0]|max)|money }}</td><td>{{ pay_methods.get(r['payment_method'], '💵 كاش') }}</td>
+    <td><span class="status">{{ r['status'] }}</span></td><td><small>{{ r['created_at'] }}</small></td></tr>
+  {% else %}<tr><td colspan="8" class="empty">مفيش سجلات</td></tr>{% endfor %}
+  {% endif %}
+</table>
+{% if fl.kind != 'orders' %}
+  <button class="btn small danger" onclick="return confirm('حذف السجلات المحددة؟ (هتتعمل نسخة احتياطية الأول)')">🗑️ حذف المحدد</button>
+</form>
+{% endif %}
+
+{% if pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}<a href="{{ url_for('admin_payments', page=page-1, **qs) }}">‹ السابق</a>{% endif %}
+  <a class="active">{{ page }} / {{ pages }}</a>
+  {% if page < pages %}<a href="{{ url_for('admin_payments', page=page+1, **qs) }}">التالي ›</a>{% endif %}
+</div>
+{% endif %}
+
+{% if fl.kind != 'orders' %}
+<h2 class="sec-title">⚠️ حذف جماعي</h2>
+<p><small>الحذف بيمسح السجل بس — <b>أرصدة العملاء الحالية ماتتغيّرش</b>. اتأكد إنك صدّرت السجل الأول. بتتعمل نسخة احتياطية تلقائية قبل أي حذف.{% if fl.kind=='req' %} الطلبات المعلقة مش بتتحذف.{% endif %}</small></p>
+<div style="display:flex;gap:15px;flex-wrap:wrap">
+  <form method="post" class="form" style="max-width:340px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="scope" value="filtered">
+    {% for k, v in qs.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <b>حذف كل نتائج الفلتر الحالي ({{ total_rows }})</b>
+    <input type="text" name="confirm_word" placeholder="اكتب: حذف" required style="padding:8px;border:1px solid #ddd;border-radius:6px">
+    <button class="btn small danger">🗑️ حذف نتائج الفلتر</button></form>
+  <form method="post" class="form" style="max-width:340px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="scope" value="all">
+    {% for k, v in qs.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <b>حذف كل السجل ({{ 'حركات الرصيد' if fl.kind=='tx' else 'طلبات الشحن' }})</b>
+    <input type="text" name="confirm_word" placeholder="اكتب: حذف الكل" required style="padding:8px;border:1px solid #ddd;border-radius:6px">
+    <button class="btn small danger">🗑️ حذف الكل</button></form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}التحليلات | Harly Click{% endblock %}
+{% block content %}
+<h1>📊 لوحة التحليلات الشاملة</h1>
+<p>
+  📅 الفترة:
+  {% for d in [7, 14, 30, 90, 365] %}<a href="{{ url_for('admin_analytics', days=d) }}" class="btn small {{ 'danger' if days==d }}">{{ 'آخر %d يوم' % d if d < 365 else 'آخر سنة' }}</a> {% endfor %}
+  <a class="btn small" href="{{ url_for('admin_analytics_export', days=days, format='xlsx') }}">⬇️ تصدير Excel</a>
+  <a class="btn small" href="{{ url_for('admin_analytics_export', days=days, format='csv') }}">⬇️ CSV</a>
+</p>
+<div class="stats">
+  <div class="stat">💰<b>{{ kpi.revenue|round|int }}</b><span>إجمالي المبيعات (ج.م)</span></div>
+  <div class="stat">🧾<b>{{ kpi.orders }}</b><span>عدد الطلبات</span></div>
+  <div class="stat">📈<b>{{ kpi.avg|round|int }}</b><span>متوسط قيمة الطلب (ج.م)</span></div>
+  <div class="stat">👥<b>{{ kpi.users }}</b><span>عميل</span></div>
+  <div class="stat">🤝<b>{{ kpi.aff_pending|round|int }}</b><span>عمولات معلقة (ج.م)</span></div>
+  <div class="stat">💸<b>{{ kpi.aff_paid|round|int }}</b><span>عمولات مدفوعة (ج.م)</span></div>
+  <div class="stat">🔄<b>{{ kpi.returns }}</b><span>عمليات إرجاع</span></div>
+  <div class="stat">📲<b>{{ kpi.wallet_in|round|int }}</b><span>شحن محافظ معتمد (ج.م)</span></div>
+  <div class="stat">🚚<b>{{ kpi.shipping|round|int }}</b><span>إيراد مصاريف الشحن (ج.م)</span></div>
+  <div class="stat">🟢<b>{{ kpi.wa_total }}</b><span>طلبات واتساب ({{ kpi.wa_new }} جديد)</span></div>
+  <div class="stat">🎧<b>{{ kpi.tickets_open }}</b><span>رسائل دعم مفتوحة</span></div>
+  <div class="stat">⚠️<b>{{ kpi.low_stock }}</b><span>منتجات مخزونها منخفض</span></div>
+  <div class="stat">💳<b>{{ kpi.balances|round|int }}</b><span>أرصدة العملاء (ج.م)</span></div>
+</div>
+
+<h2 class="sec-title">⏱️ خلال {{ 'آخر %d يوم' % days if days < 365 else 'آخر سنة' }}</h2>
+<div class="stats">
+  <div class="stat">💰<b>{{ kpi.range_revenue|round|int }}</b><span>المبيعات (ج.م)</span></div>
+  <div class="stat">🧾<b>{{ kpi.range_orders }}</b><span>الطلبات</span></div>
+  <div class="stat">🆕<b>{{ kpi.range_users }}</b><span>عملاء جدد</span></div>
+</div>
+
+<h2 class="sec-title">📅 المبيعات {{ 'آخر %d يوم' % days if days < 365 else 'آخر سنة' }}{% if days > 31 %} (بالأسبوع){% endif %}</h2>
+<div class="chart-box">
+  {% for r in daily %}
+  <div class="chart-row">
+    <span class="chart-lbl">{{ r['d'][5:] }}</span>
+    <div class="bar-bg"><div class="bar" style="width:{{ (r['s']/maxd*100)|round|int }}%"></div></div>
+    <span class="chart-val">{{ r['s']|round|int }} ج.م ({{ r['c'] }} طلب)</span>
+  </div>
+  {% else %}
+  <p class="empty">مفيش بيانات في الفترة دي</p>
+  {% endfor %}
+</div>
+
+<h2 class="sec-title">🧾 الطلبات حسب الحالة</h2>
+<div class="chart-box">
+  {% for s in status_counts %}
+  <div class="chart-row">
+    <span class="chart-lbl">{{ s['status'] }}</span>
+    <div class="bar-bg"><div class="bar alt" style="width:{{ ((s['c']/(status_counts|sum(attribute='c')|default(1)))*100)|round|int }}%"></div></div>
+    <span class="chart-val">{{ s['c'] }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="wallet-grid">
+  <div>
+    <h2 class="sec-title">🏆 أفضل 5 منتجات</h2>
+    <table class="table">
+      <tr><th>المنتج</th><th>المبيعات</th><th>الإيراد</th></tr>
+      {% for p in top_products %}
+      <tr><td>{{ p['emoji'] }} {{ p['name'] }}</td><td>{{ p['sold'] }}</td><td>{{ p['sold']*p['price'] }} ج.م</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div>
+    <h2 class="sec-title">👑 أفضل 5 عملاء</h2>
+    <table class="table">
+      <tr><th>العميل</th><th>طلبات</th><th>إجمالي شراء</th></tr>
+      {% for c in top_customers %}
+      <tr><td>{{ c['name'] }}<br><small>{{ c['email'] }}</small></td><td>{{ c['orders_count'] }}</td><td>{{ c['spent']|round|int }} ج.م</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="wallet-grid">
+  <div>
+    <h2 class="sec-title">🤝 أفضل المسوقين</h2>
+    <table class="table">
+      <tr><th>المسوق</th><th>الكود</th><th>طلبات</th><th>عمولات محققة</th></tr>
+      {% for m in top_marketers %}
+      <tr><td>{{ m['name'] }}</td><td>{{ m['code'] }}</td><td>{{ m['orders_count'] }}</td><td class="green">{{ m['paid']|round(2) }} ج.م</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div>
+    <h2 class="sec-title">🏷️ المبيعات حسب الفئة</h2>
+    <table class="table">
+      <tr><th>الفئة</th><th>الكمية</th><th>الإيراد</th></tr>
+      {% for c in cat_sales %}
+      <tr><td>{{ c['category'] }}</td><td>{{ c['q'] }}</td><td>{{ c['s']|round|int }} ج.م</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="wallet-grid">
+  <div>
+    <h2 class="sec-title">📍 المبيعات حسب المحافظة (الفترة)</h2>
+    <table class="table">
+      <tr><th>المحافظة</th><th>طلبات</th><th>المبيعات</th></tr>
+      {% for g in gov_sales %}<tr><td>{{ g['g'] }}</td><td>{{ g['c'] }}</td><td>{{ g['s']|round|int }} ج.م</td></tr>
+      {% else %}<tr><td colspan="3" class="empty">مفيش بيانات</td></tr>{% endfor %}
+    </table>
+  </div>
+  <div>
+    <h2 class="sec-title">💳 طرق الدفع (الفترة)</h2>
+    <table class="table">
+      <tr><th>الطريقة</th><th>طلبات</th><th>الإجمالي</th></tr>
+      {% for m in pay_split %}<tr><td>{{ pay_methods.get(m['m'], '💵 كاش عند الاستلام') }}</td><td>{{ m['c'] }}</td><td>{{ m['s']|round|int }} ج.م</td></tr>
+      {% else %}<tr><td colspan="3" class="empty">مفيش بيانات</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+
+<h2 class="sec-title">🔥 أفضل المنتجات في الفترة (حسب الإيراد الفعلي)</h2>
+<table class="table">
+  <tr><th>المنتج</th><th>الكمية</th><th>الإيراد</th></tr>
+  {% for p in range_top %}<tr><td>{{ p['emoji'] }} {{ p['name'] }}</td><td>{{ p['q'] }}</td><td>{{ p['s']|round|int }} ج.م</td></tr>
+  {% else %}<tr><td colspan="3" class="empty">مفيش مبيعات في الفترة دي</td></tr>{% endfor %}
+</table>
+{% endblock %}

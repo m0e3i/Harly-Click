@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}إعدادات الشحن | Harly Click{% endblock %}
+{% block content %}
+<h1>🚚 أماكن الشحن ومصاريفها</h1>
+<p>أضف أي مكان (محافظة / مدينة / منطقة) وحدد مصاريفه، وتقدر توقف الشحن لأي مكان من علامة «مفعّل» — المكان الموقوف مش بيظهر للعميل. الأرقام المبدئية أمثلة، عدّلها زي ما تحب.</p>
+
+<form method="post" class="form" style="max-width:640px;margin-bottom:18px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="add">
+  <h3>➕ إضافة مكان شحن جديد</h3>
+  <div class="row">
+    <input type="text" name="name" placeholder="اسم المكان (مثال: مدينة نصر)" minlength="2" maxlength="40" required style="flex:2">
+    <input type="number" name="fee" placeholder="مصاريف الشحن ج.م" min="0" step="0.5" required style="flex:1">
+  </div>
+  <label class="chk"><input type="checkbox" name="active" value="1" checked> مفعّل من البداية</label>
+  <button class="btn">➕ إضافة</button>
+</form>
+
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="save">
+  <button type="submit" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">حفظ</button>{# زرار افتراضي: عشان Enter يحفظ ومايحذفش أول مكان #}
+  <div class="form" style="max-width:640px;margin-bottom:15px">
+    <label class="chk" style="padding:12px;background:#fafafa;border-radius:10px"><input type="checkbox" name="enabled" {% if enabled %}checked{% endif %}> 🚚 تفعيل مصاريف الشحن (لو متقفل الشحن مجاني للكل)</label>
+    <label>🎁 شحن مجاني للطلبات من (ج.م) — اكتب 0 لإيقاف الشحن المجاني</label>
+    <input type="number" name="free_min" value="{{ free_min }}" min="0" step="1" style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  </div>
+  <table class="table">
+    <tr><th>المكان</th><th>مصاريف الشحن (ج.م)</th><th>الترتيب</th><th>مفعّل</th><th></th></tr>
+    {% for z in zones %}
+    <tr {% if not z['active'] %}style="opacity:.6"{% endif %}>
+      <td><input type="text" name="name_{{ z['id'] }}" value="{{ z['governorate'] }}" maxlength="40" style="width:170px;padding:6px;border:1px solid #ddd;border-radius:6px"></td>
+      <td><input type="number" name="fee_{{ z['id'] }}" value="{{ z['fee']|money }}" min="0" step="0.5" style="width:100px;padding:6px;border:1px solid #ddd;border-radius:6px"></td>
+      <td><input type="number" name="sort_{{ z['id'] }}" value="{{ z['sort_order'] }}" min="0" max="9999" style="width:70px;padding:6px;border:1px solid #ddd;border-radius:6px"></td>
+      <td><label class="chk"><input type="checkbox" name="active_{{ z['id'] }}" {% if z['active'] %}checked{% endif %}> {{ '✅ شغال' if z['active'] else '⏸️ موقوف' }}</label></td>
+      <td><button name="delete_zone" value="{{ z['id'] }}" formnovalidate class="btn small danger" onclick="return confirm('حذف «{{ z['governorate'] }}» نهائياً؟ (لو عايز بس توقفه شيل علامة مفعّل)')">🗑️</button></td>
+    </tr>
+    {% else %}<tr><td colspan="5" class="empty">مفيش أماكن — أضف أول مكان من فوق</td></tr>{% endfor %}
+  </table>
+  <button class="btn-big">💾 حفظ الشحن</button>
+</form>
+<form method="post" class="form" style="max-width:640px;margin-top:20px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="bulk">
+  <h3>⚡ ضبط سريع</h3>
+  <label>خلّي كل الأماكن بنفس المصاريف:</label>
+  <input type="number" name="bulk_fee" min="0" step="0.5" required style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  <button class="btn" onclick="return confirm('هيتغيّر شحن كل الأماكن؟')">تطبيق على الكل</button>
+</form>
+{% endblock %}

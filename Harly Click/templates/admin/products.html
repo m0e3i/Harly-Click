@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}إدارة المنتجات | Harly Click{% endblock %}
+{% block content %}
+<h1>📦 إدارة المنتجات</h1>
+<form method="post" enctype="multipart/form-data" class="form admin-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h3>➕ إضافة منتج جديد</h3>
+  <div class="row">
+    <input type="text" name="name" placeholder="اسم المنتج" required>
+    <input type="text" name="emoji" placeholder="إيموجي 📦" maxlength="4">
+  </div>
+  <textarea name="description" placeholder="الوصف"></textarea>
+  <div class="row">
+    <input type="number" name="price" placeholder="السعر" step="0.01" required>
+    <input type="number" name="old_price" placeholder="السعر قبل الخصم" step="0.01">
+    <input type="number" name="stock" placeholder="المخزون" value="10" required>
+  </div>
+  <select name="category">{% for c in all_categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select>
+  <div class="row">
+    <label style="flex:1">🍽️ وحدة البيع (للأكل: كيلو / علبة / كرتونة)<select name="unit" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:8px">{% for un in units %}<option value="{{ un }}">{{ un }}</option>{% endfor %}</select></label>
+    <label style="flex:1">🔖 الحد الأدنى للطلب<input type="number" name="min_order" value="1" min="1" max="10000" required style="width:100%"></label>
+  </div>
+  <label>🖼️ صورة المنتج (اختياري — لو سيبته فاضي هيظهر الإيموجي)</label>
+  <input type="file" name="image" accept="image/*">
+  <div class="row">
+    <label class="chk"><input type="checkbox" name="featured"> ⭐ منتج مميز</label>
+    <label class="chk"><input type="checkbox" name="flash"> ⚡ عرض فلاش</label>
+  </div>
+  <button type="submit" class="btn-big">إضافة ✅</button>
+</form>
+
+<table class="table">
+  <tr><th>#</th><th>المنتج</th><th>الفئة</th><th>السعر</th><th>الوحدة / الحد الأدنى</th><th>المخزون</th><th>المبيعات</th><th>إجراءات</th></tr>
+  {% for p in products %}
+  <tr>
+    <td>{{ p['id'] }}</td>
+    <td>{% if p['image'] %}<img class="thumb" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async">{% else %}{{ p['emoji'] }}{% endif %}
+        {{ p['name'] }} {% if p['featured'] %}⭐{% endif %}{% if p['flash'] %}⚡{% endif %}</td>
+    <td>{{ p['category'] }}</td><td>{{ p['price'] }} ج.م</td>
+    <td>{{ p['unit'] or 'قطعة' }}{% if (p['min_order'] or 1) > 1 %} <small>(أدنى {{ p['min_order'] }})</small>{% endif %}</td>
+    <td class="{{ 'red' if p['stock'] <= 5 }}">{{ p['stock'] }}</td>
+    <td>{{ p['sold'] }}</td>
+    <td>
+      <a href="{{ url_for('edit_product', pid=p['id']) }}" class="btn small">✏️</a>
+      <a href="{{ url_for('delete_product', pid=p['id'], _t=csrf_token()) }}" class="btn small danger" onclick="return confirm('متأكد من الحذف؟')">🗑️</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

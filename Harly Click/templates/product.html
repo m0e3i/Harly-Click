@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ p['name'] }} — {{ p['category'] }} | Harly Click{% endblock %}
+{% block meta_desc %}{{ ((p['description'] or p['name'])|striptags|trim)[:155] }} — {{ p['price'] }} ج.م{{ unit_label(p) }} من Harly Click، توصيل لكل المحافظات.{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_image %}{% if p['image'] %}<meta property="og:image" content="{{ site_url }}{{ img_src(p['image']) }}">{% endif %}{% endblock %}
+{% block content %}
+<div class="product-page">
+  {% if p['image'] %}<img class="p-img big-img" src="{{ img_src(p['image']) }}" fetchpriority="high" alt="{{ p['name'] }}">{% else %}<div class="img-box big">{{ p['emoji'] }}</div>{% endif %}
+  <div class="info">
+    <span class="tag">{{ p['category'] }}</span>
+    <h1>{{ p['name'] }}</h1>
+    <p class="sold-line">🔥 اتباع {{ p['sold'] }} مرة — 🚚 توصيل خلال 2-4 أيام عمل</p>
+    <p class="desc">{{ p['description'] }}</p>
+    <div class="price big-price">
+      <b>{{ p['price'] }} ج.م{{ unit_label(p) }}</b>
+      {% if p['old_price'] %}<s>{{ p['old_price'] }} ج.م</s><span class="off inline">وفّرت {{ p['old_price'] - p['price'] }} ج.م 🎉</span>{% endif %}
+    </div>
+    {% if p['stock'] <= 0 %}<p class="red"><b>⏳ سيعود قريباً</b></p>
+    {% else %}<p>📦 متاح: {{ p['stock'] }} {{ p['unit'] or 'قطعة' }}{% if (p['unit'] or 'قطعة') != 'قطعة' %} — البيع بال{{ p['unit'] }}{% endif %}</p>{% endif %}
+    {% if (p['min_order'] or 1) > 1 %}<p>🔖 الحد الأدنى للطلب: <b>{{ p['min_order'] }} {{ p['unit'] or 'قطعة' }}</b></p>{% endif %}
+    {% if p['stock'] >= (p['min_order'] or 1) %}
+    <form method="post" action="{{ url_for('add_to_cart', pid=p['id']) }}" class="buy"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="number" name="qty" id="buyQty" value="{{ p['min_order'] or 1 }}" min="{{ p['min_order'] or 1 }}" max="{{ p['stock'] }}">
+      <button class="btn-big" type="submit">🛒 أضف للسلة</button>
+      {% if whatsapp_on %}<a id="waProduct" href="{{ url_for('product_whatsapp', pid=p['id'], qty=p['min_order'] or 1) }}" class="btn-big btn-wa" target="_blank" rel="noopener">🟢 اطلب عبر واتساب</a>{% endif %}
+    </form>
+    {% if whatsapp_on %}<script>
+    (function(){var q=document.getElementById('buyQty'),a=document.getElementById('waProduct');
+      if(q&&a){var base="{{ url_for('product_whatsapp', pid=p['id']) }}";
+        q.addEventListener('input',function(){var v=parseInt(q.value,10);if(!(v>0))v={{ p['min_order'] or 1 }};a.href=base+'?qty='+v;});}})();
+    </script>{% endif %}
+    <a href="{{ url_for('toggle_wish', pid=p['id']) }}" class="wish-btn">{{ '💔 شيل من المفضلة' if in_wish else '❤️ أضف للمفضلة' }}</a>
+    {% else %}
+    <button class="btn-big" disabled>{{ 'سيعود قريباً ⏳' if p['stock'] <= 0 else 'المتاح أقل من الحد الأدنى للطلب' }}</button>
+    <a href="{{ url_for('toggle_wish', pid=p['id']) }}" class="wish-btn">❤️ أضف للمفضلة</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if related %}
+<h2 class="sec-title">منتجات مشابهة</h2>
+<div class="grid">
+  {% for r in related %}
+  <div class="card">
+    {% if r['image'] %}<img class="p-img" src="{{ img_src(r['image'], thumb=True) }}" loading="lazy" decoding="async" alt="{{ r['name'] }}">{% else %}<div class="img-box">{{ r['emoji'] }}</div>{% endif %}
+    <h3>{{ r['name'] }}</h3>
+    <div class="price"><b>{{ r['price'] }} ج.م{{ unit_label(r) }}</b></div>
+    <a href="{{ url_for('product', pid=r['id']) }}" class="btn">شوف التفاصيل</a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

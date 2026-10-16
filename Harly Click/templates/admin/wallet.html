@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}طلبات شحن الرصيد | Harly Click{% endblock %}
+{% block content %}
+<h1>💰 طلبات شحن الرصيد</h1>
+
+<!-- ✅ جديد: حالة ميزة رقم المحوّل + رابط الإعدادات -->
+<p>📱 ميزة رقم المحوّل: <b>{{ '✅ مفعّلة' if sender_on else '⏸️ متعطلة' }}</b> — <a href="{{ url_for('admin_settings') }}">تغيير من الإعدادات ⚙️</a></p>
+
+{% set pending = reqs | selectattr('status', 'equalto', 'pending') | list %}
+<h2 class="sec-title">⏳ بانتظار المراجعة ({{ pending|length }})</h2>
+{% if pending %}
+<table class="table">
+  <tr><th>#</th><th>العميل</th><th>المبلغ</th><th>الوسيلة</th><th>رقم المحوّل</th><th>التاريخ</th><th>إجراء</th></tr>
+  {% for r in pending %}
+  <tr>
+    <td>{{ r['id'] }}</td><td>{{ r['uname'] }}<br><small>{{ r['email'] }}</small></td>
+    <td><b>{{ r['amount'] }} ج.م</b></td>
+    <td>{{ pay_methods.get(r['method'], r['method']) }}</td>
+    <!-- ✅ جديد: رقم المحوّل منه -->
+    <td><b>{{ r['sender_number'] or '—' }}</b></td>
+    <td><small>{{ r['created_at'] }}</small></td>
+    <td>
+      <a href="{{ url_for('admin_wallet', approve=r['id'], _t=csrf_token()) }}" class="btn small" onclick="return confirm('تأكيد إضافة %.2f ج.م لرصيد %s؟')">✅ موافقة</a>
+      <a href="{{ url_for('admin_wallet', reject=r['id'], _t=csrf_token()) }}" class="btn small danger" onclick="return confirm('رفض الطلب؟')">❌ رفض</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">مفيش طلبات معلقة 🎉</p>
+{% endif %}
+
+<h2 class="sec-title">📋 كل الطلبات</h2>
+<table class="table">
+  <tr><th>#</th><th>العميل</th><th>المبلغ</th><th>الوسيلة</th><th>رقم المحوّل</th><th>الحالة</th><th>تاريخ الطلب</th><th>تاريخ المراجعة</th></tr>
+  {% for r in reqs %}
+  <tr>
+    <td>{{ r['id'] }}</td><td>{{ r['uname'] }}</td><td>{{ r['amount'] }} ج.م</td>
+    <td>{{ pay_methods.get(r['method'], r['method']) }}</td>
+    <!-- ✅ جديد: رقم المحوّل منه -->
+    <td>{{ r['sender_number'] or '—' }}</td>
+    <td>
+      {% if r['status'] == 'pending' %}<span class="status">⏳ معلق</span>
+      {% elif r['status'] == 'approved' %}<span class="status ok">✅ موافق</span>
+      {% else %}<span class="status no">❌ مرفوض</span>{% endif %}
+    </td>
+    <td><small>{{ r['created_at'] }}</small></td>
+    <td><small>{{ r['handled_at'] or '-' }}</small></td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p><a href="{{ url_for('admin_payment_settings') }}" class="btn">💳 تغيير رقم التحويل / إيقاف وتشغيل طرق الدفع</a></p>
+<h2 class="sec-title">📊 آخر حركات الأرصدة <a href="{{ url_for('admin_payments') }}" class="btn small">📜 السجل الكامل + حذف + تصدير</a></h2>
+<table class="table">
+  <tr><th>العميل</th><th>المبلغ</th><th>النوع</th><th>ملاحظة</th><th>التاريخ</th></tr>
+  {% for t in txs %}
+  <tr>
+    <td>{{ t['uname'] }}</td>
+    <td class="{{ 'green' if t['amount'] > 0 else 'red' }}"><b>{{ '%+.2f'|format(t['amount']) }} ج.م</b></td>
+    <td>{{ {'recharge':'📲 شحن', 'purchase':'🛒 شراء', 'admin':'⚙️ إدارة', 'affiliate':'🤝 عمولة', 'refund':'🔄 استرداد'}.get(t['type'], t['type']) }}</td>
+    <td>{{ t['note'] or '-' }}</td>
+    <td><small>{{ t['created_at'] }}</small></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

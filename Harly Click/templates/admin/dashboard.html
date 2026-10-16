@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}لوحة التحكم | Harly Click{% endblock %}
+{% block content %}
+<h1>⚙️ لوحة تحكم الإدارة</h1>
+<div class="stats">
+  <div class="stat">📦<b>{{ stats.products }}</b><span>منتج</span></div>
+  <div class="stat">🧾<b>{{ stats.orders }}</b><span>طلب</span></div>
+  <div class="stat">👥<b>{{ stats.users }}</b><span>عميل</span></div>
+  <div class="stat">💰<b>{{ stats.revenue|round|int }}</b><span>المبيعات (ج.م)</span></div>
+  <div class="stat">💳<b>{{ stats.balances_sum|round|int }}</b><span>أرصدة العملاء (ج.م)</span></div>
+</div>
+<p>
+  <a href="{{ url_for('admin_analytics') }}" class="btn">📊 لوحة التحليلات الشاملة</a>
+  <a href="{{ url_for('admin_products') }}" class="btn">📦 المنتجات</a>
+  <a href="{{ url_for('admin_categories') }}" class="btn">🗂️ الأقسام</a>
+  <a href="{{ url_for('admin_orders') }}" class="btn">🧾 الطلبات</a>
+  <a href="{{ url_for('admin_users') }}" class="btn">👥 العملاء</a>
+  <a href="{{ url_for('admin_wallet') }}" class="btn {{ 'pulse' if stats.pending_wallet > 0 }}">💰 الشحن {{ '🔴' if stats.pending_wallet > 0 }}</a>
+  <a href="{{ url_for('admin_affiliates') }}" class="btn {{ 'pulse' if stats.pending_marketers > 0 or stats.pending_aff > 0 }}">🤝 العمولة {{ '🔴' if stats.pending_marketers > 0 or stats.pending_aff > 0 }}</a>
+  <a href="{{ url_for('admin_returns') }}" class="btn {{ 'pulse' if stats.pending_returns > 0 }}">🔄 الإرجاع {{ '🔴' if stats.pending_returns > 0 }}</a>
+  <a href="{{ url_for('admin_coupons') }}" class="btn">🎟️ الكوبونات</a>
+  <a href="{{ url_for('admin_whatsapp') }}" class="btn {{ 'pulse' if stats.wa_new > 0 }}">🟢 طلبات واتساب {{ '🔴' if stats.wa_new > 0 }}</a>
+  <a href="{{ url_for('admin_shipping') }}" class="btn">🚚 الشحن</a>
+  <a href="{{ url_for('admin_payment_settings') }}" class="btn">💳 طرق الدفع</a>
+  <a href="{{ url_for('admin_support') }}" class="btn {{ 'pulse' if stats.tickets_new > 0 }}">🎧 الدعم {{ '🔴' if stats.tickets_new > 0 }}</a>
+  <a href="{{ url_for('admin_payments') }}" class="btn">📜 سجل المدفوعات</a>
+  <a href="{{ url_for('admin_backups') }}" class="btn">💾 النسخ الاحتياطي</a>
+  <a href="{{ url_for('admin_settings') }}" class="btn">⚙️ الإعدادات</a>
+</p>
+
+{% if low_stock %}
+<h2 class="sec-title">⚠️ مخزون منخفض (5 أو أقل)</h2>
+<table class="table">
+  <tr><th>#</th><th>المنتج</th><th>المتبقي</th></tr>
+  {% for p in low_stock %}
+  <tr><td>{{ p['id'] }}</td><td>{{ p['emoji'] }} {{ p['name'] }}</td><td><b class="red">{{ p['stock'] }}</b></td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2 class="sec-title">أحدث الطلبات</h2>
+<table class="table">
+  <tr><th>#</th><th>الإجمالي</th><th>المدفوع</th><th>الحالة</th><th>التاريخ</th></tr>
+  {% for o in recent %}
+  <tr>
+    <td>{{ o['id'] }}</td><td>{{ o['total'] }} ج.م</td>
+    <td class="{{ 'green' if o['paid'] >= o['total'] else '' }}">{{ o['paid'] }} ج.م</td>
+    <td><span class="status">{{ o['status'] }}</span></td><td>{{ o['created_at'] }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

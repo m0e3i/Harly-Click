@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>فاتورة طلب #{{ o['id'] }} | Harly Click</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="stylesheet" href="{{ static_v('style.css') }}">
+<style>
+  .inv{max-width:700px;margin:25px auto;background:#fff;padding:30px;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.1)}
+  .inv-head{display:flex;justify-content:space-between;border-bottom:3px solid var(--main);padding-bottom:15px;margin-bottom:15px;flex-wrap:wrap}
+  .inv h1{color:var(--main)}
+  .inv-meta{background:var(--light);border-radius:10px;padding:12px;margin:12px 0;line-height:2}
+  @media print{.no-print{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="inv">
+  <div class="inv-head">
+    <div><h1>⚡ Harly Click</h1><p>فاتورة ضريبية مبسطة 🧾</p></div>
+    <div style="text-align:left">
+      <p>فاتورة رقم: <b>#{{ o['id'] }}</b></p>
+      <p>التاريخ: {{ now }}</p>
+    </div>
+  </div>
+  <div class="inv-meta">
+    <b>العميل:</b> {{ o['uname'] or 'عميل' }}{% if o['uemail'] %} — {{ o['uemail'] }}{% endif %}<br>
+    <b>📞 الموبايل:</b> {{ o['phone'] }}<br>
+    <b>📍 العنوان:</b> {{ o['governorate'] ~ ' — ' if o['governorate'] else '' }}{{ o['address'] }}
+  </div>
+  <table class="table">
+    <tr><th>#</th><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr>
+    {% for it in items %}
+    <tr><td>{{ loop.index }}</td><td>{{ it['emoji'] }} {{ it['name'] }}{% if (it['unit'] or 'قطعة') != 'قطعة' %} ({{ it['unit'] }}){% endif %}</td>
+        <td>{{ it['qty'] }}</td><td>{{ it['price'] }} ج.م</td><td>{{ it['qty']*it['price'] }} ج.م</td></tr>
+    {% endfor %}
+  </table>
+  <div class="cart-total">
+    {% if o['discount'] %}<p>الخصم: <span class="green">-{{ o['discount'] }} ج.م</span></p>{% endif %}
+    {% if o['governorate'] or o['shipping'] %}<p>🚚 الشحن{% if o['governorate'] %} إلى {{ o['governorate'] }}{% endif %}: {% if o['shipping'] %}{{ o['shipping']|money }} ج.م{% else %}<span class="green">مجاني</span>{% endif %}</p>{% endif %}
+    <h3>الإجمالي المطلوب: <span class="red">{{ o['total'] }} ج.م</span></h3>
+    <p>طريقة الدفع: {{ pay_methods.get(o['payment_method'], '💵 كاش عند الاستلام') }} — المدفوع: {{ o['paid'] }} ج.م</p>
+    <p>حالة الطلب: <b>{{ o['status'] }}</b></p>
+    {% if aff %}<p>🤝 تم الشراء بكود مسوق: <b>{{ aff['code'] }}</b></p>{% endif %}
+  </div>
+  <p style="text-align:center;margin-top:20px">شكراً لتسوقك من Harly Click 🛍️ — {{ site.email }} — 📞 {{ site.phone }}</p>
+  <p class="no-print" style="text-align:center">
+    <button class="btn-big" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+    <a class="btn-big ghost" href="{{ url_for('home') }}">🏠 الرئيسية</a>
+  </p>
+</div>
+</body>
+</html>

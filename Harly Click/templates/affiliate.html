@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}التسويق بالعمولة | Harly Click{% endblock %}
+{% block content %}
+<h1>🤝 التسويق بالعمولة</h1>
+<p>شارك كودك واكسب: العميل ياخد خصم <b class="green">{{ 10 }}%</b> وانت تاخد عمولة <b class="green">{{ 5 }}%</b> — والعمولة تتعلق {{ hold_days }} يوم للتأكد من عدم إرجاع المنتج 🛡️</p>
+
+{% if not m %}
+<div class="auth" style="max-width:600px">
+  <h3>🚀 سجّل كمسوق وابدأ الربح</h3>
+  <p>هيتم إنشاء كود خاص بيك، ويشتغل بعد موافقة الإدارة</p>
+  <form method="post" action="{{ url_for('affiliate_join') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn-big">سجّلني كمسوق ✅</button>
+  </form>
+</div>
+{% else %}
+<div class="stats">
+  <div class="stat">🎟️<b style="font-size:20px">{{ stats.code }}</b><span>كودك الخاص</span></div>
+  <div class="stat">🧾<b>{{ stats.orders }}</b><span>طلبات بكودك</span></div>
+  <div class="stat">⏳<b>{{ stats.pending|round(2) }}</b><span>عمولات معلقة (ج.م)</span></div>
+  <div class="stat">💰<b>{{ stats.confirmed|round(2) }}</b><span>عمولات متحققة (ج.م)</span></div>
+</div>
+
+{% if stats.active %}
+<div class="transfer-box">
+  <h3>🔗 رابطك الخاص (شاركه مع عملائك)</h3>
+  <div class="transfer-num"><span style="font-size:16px">{{ stats.link }}</span>
+    <button class="btn" data-num="{{ stats.link }}" onclick="copyNum(this)">📋 نسخ</button>
+  </div>
+  <p>أو كود الخصم يدوياً: <b class="red">{{ stats.code }}</b></p>
+</div>
+{% else %}
+<p class="flash warning">⏳ حسابك بانتظار موافقة الإدارة على تفعيل الكود</p>
+{% endif %}
+
+<h2 class="sec-title">📊 طلبات كودك</h2>
+{% if rows %}
+<table class="table">
+  <tr><th>الطلب</th><th>إجمالي الطلب</th><th>خصم المشتري</th><th>عمولتك</th><th>تتفك بعد</th><th>الحالة</th></tr>
+  {% for r in rows %}
+  <tr>
+    <td>#{{ r['order_id'] }}</td><td>{{ r['order_total'] }} ج.م</td>
+    <td class="green">-{{ r['buyer_discount'] }} ج.م</td>
+    <td><b>{{ r['commission'] }} ج.م</b></td>
+    <td><small>{{ r['hold_until'] }}</small></td>
+    <td>
+      {% if r['status']=='confirmed' %}<span class="status ok">✅ متحققة</span>
+      {% elif r['status']=='cancelled' %}<span class="status no">❌ ملغاة</span>
+      {% else %}<span class="status">⏳ معلقة {{ hold_days }} يوم</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">لسه مفيش طلبات بكودك — شارك رابطك وابدأ الربح! 🚀</p>
+{% endif %}
+{% endif %}
+{% endblock %}

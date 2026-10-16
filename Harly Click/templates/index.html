@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>⚡ Harly Click</h1>
+  <p>سوبر ماركت أونلاين — كل احتياجات بيتك من بقالة وخضار وفاكهة ولحوم وألبان بأحسن الأسعار وتوصيل لباب البيت 🚚</p>
+  <a href="{{ url_for('shop') }}" class="btn-big">تسوق دلوقتي 🛍️</a>
+  <div class="hero-feats">
+    <span>🚚 توصيل سريع</span><span>🥬 منتجات طازجة</span><span>💰 محفظة رصيد</span><span>🎧 دعم فني</span>
+  </div>
+</section>
+
+<div class="cats">
+  {% for c in categories %}
+  <a href="{{ url_for('shop', cat=c) }}">{{ category_emoji.get(c, '') }} {{ c }}</a>
+  {% endfor %}
+</div>
+
+{% for sec in home_sections %}
+<h2 class="sec-title">{{ sec.emoji }} {{ sec.name }} <a href="{{ url_for('shop', cat=sec.name) }}" class="btn small">عرض الكل ›</a></h2>
+<div class="grid">
+  {% for p in sec.products %}
+  <div class="card">
+    {% if p['image'] %}<img class="p-img" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async" alt="{{ p['name'] }}">{% else %}<div class="img-box">{{ p['emoji'] }}</div>{% endif %}
+    {% if p['old_price'] %}<span class="off">-{{ ((1 - p['price']/p['old_price'])*100)|round|int }}%</span>{% endif %}
+    <h3>{{ p['name'] }}</h3>
+    <div class="price"><b>{{ p['price'] }} ج.م{{ unit_label(p) }}</b>{% if p['old_price'] %}<s>{{ p['old_price'] }} ج.م</s>{% endif %}</div>
+    {% if p['stock'] > 0 %}
+    <form method="post" action="{{ url_for('add_to_cart', pid=p['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" type="submit">🛒 أضف للسلة</button></form>
+    {% else %}<button class="btn" disabled>سيعود قريباً ⏳</button>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+{% if flash_deals %}
+<section class="flash-sec">
+  <h2 class="sec-title light">⚡ عروض فلاش <span class="timer" id="flashTimer">⏰</span></h2>
+  <div class="grid">
+    {% for p in flash_deals %}
+    <div class="card flash-card">
+      {% if p['image'] %}<img class="p-img" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async" alt="{{ p['name'] }}">{% else %}<div class="img-box">{{ p['emoji'] }}</div>{% endif %}
+      <span class="off">-{{ ((1 - p['price']/p['old_price'])*100)|round|int }}%</span>
+      <h3>{{ p['name'] }}</h3>
+      <div class="price"><b>{{ p['price'] }} ج.م{{ unit_label(p) }}</b><s>{{ p['old_price'] }} ج.م</s></div>
+      <a href="{{ url_for('product', pid=p['id']) }}" class="btn">اشترِ دلوقتي 🔥</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+<script>
+function tick(){
+  const now = new Date(), end = new Date(now); end.setHours(23,59,59,999);
+  let d = Math.max(0, end - now);
+  const h = String(Math.floor(d/3.6e6)).padStart(2,'0'),
+        m = String(Math.floor(d%3.6e6/6e4)).padStart(2,'0'),
+        s = String(Math.floor(d%6e4/1e3)).padStart(2,'0');
+  const el = document.getElementById('flashTimer');
+  if (el) el.textContent = '⏰ ينتهي خلال ' + h + ':' + m + ':' + s;
+}
+tick(); setInterval(tick, 1000);
+</script>
+{% endif %}
+
+<h2 class="sec-title">🏆 الأكثر مبيعاً</h2>
+<div class="grid">
+  {% for p in best %}
+  <div class="card">
+    {% if p['image'] %}<img class="p-img" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async" alt="{{ p['name'] }}">{% else %}<div class="img-box">{{ p['emoji'] }}</div>{% endif %}
+    <h3>{{ p['name'] }}</h3>
+    <div class="price"><b>{{ p['price'] }} ج.م{{ unit_label(p) }}</b>{% if p['old_price'] %}<s>{{ p['old_price'] }} ج.م</s>{% endif %}</div>
+    <form method="post" action="{{ url_for('add_to_cart', pid=p['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" type="submit">🛒 أضف للسلة</button></form>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 class="sec-title">⭐ منتجات مميزة</h2>
+<div class="grid">
+  {% for p in featured %}
+  <div class="card">
+    {% if p['image'] %}<img class="p-img" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async" alt="{{ p['name'] }}">{% else %}<div class="img-box">{{ p['emoji'] }}</div>{% endif %}
+    {% if p['old_price'] %}<span class="off">-{{ ((1 - p['price']/p['old_price'])*100)|round|int }}%</span>{% endif %}
+    <h3>{{ p['name'] }}</h3>
+    <div class="price"><b>{{ p['price'] }} ج.م{{ unit_label(p) }}</b>{% if p['old_price'] %}<s>{{ p['old_price'] }} ج.م</s>{% endif %}</div>
+    <a href="{{ url_for('product', pid=p['id']) }}" class="btn">شوف التفاصيل</a>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 class="sec-title">🆕 وصل حديثاً</h2>
+<div class="grid">
+  {% for p in latest %}
+  <div class="card">
+    {% if p['image'] %}<img class="p-img" src="{{ img_src(p['image'], thumb=True) }}" loading="lazy" decoding="async" alt="{{ p['name'] }}">{% else %}<div class="img-box">{{ p['emoji'] }}</div>{% endif %}
+    <h3>{{ p['name'] }}</h3>
+    <div class="price"><b>{{ p['price'] }} ج.م{{ unit_label(p) }}</b></div>
+    <a href="{{ url_for('product', pid=p['id']) }}" class="btn">شوف التفاصيل</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

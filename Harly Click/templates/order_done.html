@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}تم الطلب | Harly Click{% endblock %}
+{% block content %}
+<div class="done">
+  <h1>🎉 تم استلام طلبك!</h1>
+  <p>رقم طلبك: <b>#{{ oid }}</b></p>
+  <p>هتقدر تتابعه من صفحة "طلباتي" 📦</p>
+  <p>
+    <a href="{{ url_for('invoice', oid=oid) }}" class="btn-big" target="_blank">🧾 استلام الفاتورة</a>
+    <a href="{{ url_for('my_orders') }}" class="btn-big ghost">📦 طلباتي</a>
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}إعدادات الموقع | Harly Click{% endblock %}
+{% block content %}
+<h1>⚙️ إعدادات المميزات</h1>
+<form method="post" class="form" style="max-width:560px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="chk" style="padding:12px;background:#fafafa;border-radius:10px">
+    <input type="checkbox" name="wallet_sender" {% if s.wallet_sender %}checked{% endif %}>
+    📱 رقم المحوّل في المحفظة — تفعيل إلزام العميل بكتابة رقم المحول منه عند شحن الرصيد
+  </label>
+  <label class="chk" style="padding:12px;background:#fafafa;border-radius:10px">
+    <input type="checkbox" name="affiliate" {% if s.affiliate %}checked{% endif %}>
+    🤝 قسم التسويق بالعمولة — تفعيل/إيقاف القسم كاملاً
+  </label>
+  <label class="chk" style="padding:12px;background:#fafafa;border-radius:10px">
+    <input type="checkbox" name="returns" {% if s.returns %}checked{% endif %}>
+    🔄 طلبات الإرجاع — تفعيل/إيقاف إمكانية طلب الإرجاع للعملاء
+  </label>
+  <label class="chk" style="padding:12px;background:#fafafa;border-radius:10px">
+    <input type="checkbox" name="whatsapp_cart" {% if s.whatsapp_cart %}checked{% endif %}>
+    🟢 الطلب عبر واتساب — زرار "اطلب عبر واتساب" في السلة (تفعيل/إيقاف)
+  </label>
+  <label>📱 رقم واتساب استقبال الطلبات</label>
+  <input type="text" name="whatsapp_number" value="{{ wa_number }}" placeholder="01xxxxxxxxx" inputmode="tel" maxlength="20" style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  <h3 style="margin-top:10px">🎧 بيانات التواصل (بتظهر في الفوتر وصفحة الدعم والفاتورة والبوليصة)</h3>
+  <label>📞 رقم الدعم</label>
+  <input type="text" name="support_phone" value="{{ info.phone }}" inputmode="tel" maxlength="20" style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  <label>✉️ إيميل الدعم</label>
+  <input type="email" name="support_email" value="{{ info.email }}" maxlength="80" style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  <label class="chk" style="padding:12px;background:#fafafa;border-radius:10px">
+    <input type="checkbox" name="support_whatsapp_on" {% if s.support_whatsapp_on %}checked{% endif %}>
+    💬 زرار واتساب الدعم الفني (زرار عائم في الموقع + صفحة الدعم) — تفعيل/إيقاف
+  </label>
+  <label>💬 رقم واتساب الدعم الفني</label>
+  <input type="text" name="support_whatsapp" value="{{ info.wa_support }}" inputmode="tel" maxlength="20" style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  <label>🕐 مواعيد الدعم</label>
+  <input type="text" name="support_hours" value="{{ info.hours }}" maxlength="80" style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  <label>📍 عنوان المتجر</label>
+  <input type="text" name="store_address" value="{{ info.address }}" maxlength="160" style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  <h3 style="margin-top:10px">💾 النسخ الاحتياطي</h3>
+  <label>عدد أيام النسخ التلقائية اللي بتتحفظ (1 - 90) — <a href="{{ url_for('admin_backups') }}">إدارة النسخ</a></label>
+  <input type="number" name="backup_keep" value="{{ backup_keep }}" min="1" max="90" style="padding:11px;border:1px solid #ddd;border-radius:8px">
+  <button class="btn-big">💾 حفظ الإعدادات</button>
+</form>
+{% endblock %}

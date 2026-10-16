@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}العملاء | Harly Click{% endblock %}
+{% block content %}
+<h1>👥 إدارة حسابات العملاء</h1>
+<p><a href="{{ url_for('admin_users_export') }}" class="btn">⬇️ تصدير بيانات العملاء (Excel/CSV)</a>
+  <a href="{{ url_for('admin_payments') }}" class="btn">📜 سجل المدفوعات</a></p>
+<details style="margin:10px 0">
+  <summary class="btn small danger" style="display:inline-block">🧹 تصفير أرصدة كل العملاء</summary>
+  <form method="post" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="balance_zero_all">
+    <span>⚠️ هيتحذف رصيد كل العملاء (مع تسجيل الحركة، ونسخة احتياطية تلقائية قبلها). اكتب <b>تصفير</b> للتأكيد:</span>
+    <input type="text" name="confirm_word" required style="padding:6px;border:1px solid #ddd;border-radius:6px;width:110px">
+    <button class="btn small danger">تنفيذ</button>
+  </form>
+</details>
+<table class="table">
+  <tr><th>#</th><th>العميل وبياناته</th><th>الرصيد</th><th>الطلبات</th><th>الحالة</th><th>التحكم</th></tr>
+  {% for u in users %}
+  <tr>
+    <td>{{ u['id'] }}</td>
+    <td style="text-align:right">
+      <details>
+        <summary><b>{{ u['name'] }}</b> {% if u['is_admin'] %}👑{% endif %}{% if not u['active'] %}<span class="status no">موقوف</span>{% endif %}</summary>
+        <form method="post" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ u['id'] }}">
+          <input type="hidden" name="action" value="edit">
+          <input type="text" name="name" value="{{ u['name'] }}" placeholder="الاسم" style="width:110px;padding:6px;border:1px solid #ddd;border-radius:6px">
+          <input type="email" name="email" value="{{ u['email'] }}" placeholder="الإيميل" style="width:160px;padding:6px;border:1px solid #ddd;border-radius:6px">
+          <input type="text" name="phone" value="{{ u['phone'] or '' }}" placeholder="الموبايل" style="width:110px;padding:6px;border:1px solid #ddd;border-radius:6px">
+          <input type="text" name="address" value="{{ u['address'] or '' }}" placeholder="العنوان" style="width:150px;padding:6px;border:1px solid #ddd;border-radius:6px">
+          <input type="text" name="reset_password" placeholder="كلمة سر جديدة (اختياري)" style="width:150px;padding:6px;border:1px solid #ddd;border-radius:6px">
+          <button class="btn small">💾 حفظ</button>
+        </form>
+      </details>
+      <small>{{ u['email'] }} — {{ u['phone'] or 'بدون موبايل' }}</small>
+    </td>
+    <td>
+      <b class="{{ 'green' if u['balance'] > 0 }}">{{ u['balance'] }} ج.م</b>
+      {% if not u['is_admin'] %}
+      <form method="post" class="bal-form" style="margin-top:5px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="user_id" value="{{ u['id'] }}">
+        <input type="hidden" name="action" value="balance">
+        <input type="number" name="amount" placeholder="المبلغ" min="1" step="0.01" required>
+        <input type="text" name="note" placeholder="سبب (اختياري)" maxlength="100" style="width:110px">
+        <button name="dir" value="add" class="btn small">➕</button>
+        <button name="dir" value="deduct" class="btn small danger" onclick="return confirm('متأكد من الخصم؟')">➖</button>
+      </form>
+      <form method="post" class="bal-form" style="margin-top:4px" onsubmit="return confirm('حذف (تصفير) رصيد العميل ده؟')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="user_id" value="{{ u['id'] }}">
+        <input type="hidden" name="action" value="balance_zero">
+        <button class="btn small danger">🧹 تصفير الرصيد</button>
+      </form>
+      {% endif %}
+    </td>
+    <td>{{ u['orders_count'] }}</td>
+    <td>{{ '👑 إدارة' if u['is_admin'] else ('✅ نشط' if u['active'] else '🚫 موقوف') }}</td>
+    <td>
+      <a href="{{ url_for('admin_user_detail', uid=u['id']) }}" class="btn small">📂 تفاصيل</a>
+      {% if not u['is_admin'] %}
+      <form method="post" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="user_id" value="{{ u['id'] }}">
+        <input type="hidden" name="action" value="toggle">
+        <button class="btn small {{ 'danger' if u['active'] }}">{{ '⏸️ إيقاف' if u['active'] else '▶️ تفعيل' }}</button>
+      </form>
+      <form method="post" style="display:inline" onsubmit="return confirm('⚠️ حذف نهائي للحساب وكل بياناته!')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="user_id" value="{{ u['id'] }}">
+        <input type="hidden" name="action" value="delete">
+        <button class="btn small danger">🗑️ حذف</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

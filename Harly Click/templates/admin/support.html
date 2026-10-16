@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}الدعم الفني | Harly Click{% endblock %}
+{% block content %}
+<h1>🎧 رسائل الدعم</h1>
+<p>
+  <a href="{{ url_for('admin_support') }}" class="btn small {{ 'danger' if not status_filter }}">الكل</a>
+  {% for s in statuses %}<a href="{{ url_for('admin_support', status=s) }}" class="btn small {{ 'danger' if status_filter==s }}">{{ s }} ({{ counts.get(s, 0) }})</a>{% endfor %}
+</p>
+{% for t in rows %}
+<div class="order-box">
+  <div class="order-head"><b>#{{ t['id'] }} — {{ t['subject'] }}</b> <span class="status">{{ t['status'] }}</span> <small>{{ t['created_at'] }}</small></div>
+  <p>👤 {{ t['name'] }} — ✉️ <a href="mailto:{{ t['email'] }}">{{ t['email'] }}</a>{% if t['phone'] %} — 📞 {{ t['phone'] }}
+     <a class="btn small btn-wa" style="margin:0" target="_blank" rel="noopener" href="https://wa.me/{{ intl(t['phone']) }}">💬</a>{% endif %}
+     {% if t['user_id'] %}— <a href="{{ url_for('admin_user_detail', uid=t['user_id']) }}">حساب عميل</a>{% endif %}</p>
+  <p style="white-space:pre-wrap">{{ t['message'] }}</p>
+  <form method="post" style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="id" value="{{ t['id'] }}"><input type="hidden" name="action" value="reply">
+    <textarea name="reply" placeholder="رد الإدارة (بيظهر للعميل في صفحة الدعم لو مسجّل دخول)" maxlength="2000" style="flex:1;min-width:240px;padding:8px;border:1px solid #ddd;border-radius:8px">{{ t['admin_reply'] }}</textarea>
+    <select name="status" style="padding:8px;border:1px solid #ddd;border-radius:8px">{% for s in statuses %}<option value="{{ s }}" {% if t['status']==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+    <button class="btn small">💾 حفظ الرد</button>
+  </form>
+  <form method="post" style="margin-top:6px" onsubmit="return confirm('حذف الرسالة؟')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="id" value="{{ t['id'] }}"><input type="hidden" name="action" value="delete"><button class="btn small danger">🗑️ حذف</button></form>
+</div>
+{% else %}<p class="empty">مفيش رسائل 🎉</p>{% endfor %}
+{% endblock %}
